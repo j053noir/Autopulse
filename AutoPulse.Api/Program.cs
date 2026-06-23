@@ -1,4 +1,7 @@
 using AutoPulse.Application;
+using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
+using AutoPulse.Application.Application.Common.Behaviors;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +9,20 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddControllers();
+
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
+
+    // Auction
+    cfg.RegisterServicesFromAssembly(typeof(CreateAuctionCommand).Assembly);
+    
+});
+
 var app = builder.Build();
+
+app.MapControllers();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
