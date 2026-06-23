@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="AutoPulse.Api/AutoPulse.Api.csproj" />
+  <Project Path="AutoPulse.Application/AutoPulse.Application.csproj" />
+</Solution>

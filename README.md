@@ -1,0 +1,1 @@
+AutoPulse is a platform that hosts live auctions for vehicles and real-time telemetry monitoring. Designed for high concurrency, distributed systems and optmizing the performance developed in .NET Core & React
