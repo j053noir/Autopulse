@@ -1,6 +1,6 @@
-using AutoPulse.Application;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Common.Behaviors;
+using AutoPulse.Infrastructure;
 using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 builder.Services.AddControllers();
+
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddMediatR(cfg =>
 {
@@ -35,22 +37,5 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-var Marques = new List<string> { "Toyonda", "Honta", "Furd", "Shevrolet", "Nessan" };
-var Models = new List<string> { "Alpha", "Beta", "Gamma", "Delta", "Iota" };
-
-app.MapGet("/vehicles", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new Vehicle
-        (
-            Marques[Random.Shared.Next(Marques.Count)],
-            Models[Random.Shared.Next(Models.Count)],
-            Random.Shared.Next(2019, 2025)
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetVehicles");
 
 app.Run();

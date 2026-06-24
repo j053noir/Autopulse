@@ -1,31 +1,49 @@
-﻿using MediatR;
+﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Domain.Common.Interfaces;
+using AutoPulse.Domain.Entities;
+using MediatR;
 
 namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
 {
     public class GetAuctionByIdQueryHandler : IRequestHandler<GetAuctionByIdQuery, AuctionDto?>
     {
-        public GetAuctionByIdQueryHandler() { }
+        private readonly IRepository<Auction> _auctionRepository;
+        private readonly IAutoPulseDbContext _context;
+
+        public GetAuctionByIdQueryHandler(IRepository<Auction> auctionRepository, IAutoPulseDbContext context)
+        {
+            _auctionRepository = auctionRepository;
+            _context = context;
+        }
 
         public async Task<AuctionDto?> Handle(GetAuctionByIdQuery request, CancellationToken cancellationToken)
         {
             // 1. Query in the DB
-            // TODO: retrieve data from database
-            await Task.Delay(25, cancellationToken);            
+            var entity = await _auctionRepository.GetByIdAsync(request.Id, cancellationToken);
 
-            AuctionDto? auction = null;
+            // 2. Return null if entity not found
+            if (entity == null) return null;
 
-            if (Random.Shared.NextDouble() < 0.5)
-            {
-                auction = new AuctionDto(
-                    Id: request.Id,
-                    VehicleModel: "Toyonda Handibook",
-                    CurrentPrice: 65000,
-                    EndTime: DateTime.UtcNow.AddHours(4),
-                    IsActive: true
-                );
-            }
+            // 3. Map the entity to the DTO
+            var auction = new AuctionDto(
+                Id: entity.Id,
+                Vehicle: new VehicleDto(
+                    Id: entity.Vehicle?.Id,
+                    VIN: entity.Vehicle?.VIN,
+                    Marquee: entity.Vehicle?.Marquee,
+                    Model: entity.Vehicle?.Model,
+                    Year: entity.Vehicle?.Year,
+                    Mileage: entity.Vehicle?.Mileage
+                ),
+                StartingPrice: entity.StartingPrice?.Amount,
+                StartingPriceCurrency: entity.StartingPrice?.CurrencyCode,
+                CurrentPrice: entity.CurrentPrice?.Amount,
+                CurrentPriceCurrency: entity.CurrentPrice?.CurrencyCode,
+                EndTime: entity.EndTime,
+                IsActive: entity.IsActive
+            );
 
-            // Return retrieved data
+            // 4. Return retrieved data
             return auction;
         }
     }

@@ -5,7 +5,13 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
 {
     public record CreateAuctionCommand
     (
-        string VehicleModel,
+        // Vehicle,
+        string Vin,
+        string Marquee,
+        string Model,
+        int Year,
+        int Mileage,
+        // Auction,
         decimal StartingPrice,
         DateTime EndTime,
         Guid IdempotencyKey

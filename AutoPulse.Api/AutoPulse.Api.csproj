@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutoPulse.Application\AutoPulse.Application.csproj" />
+    <ProjectReference Include="..\AutoPulse.Infrastructure\AutoPulse.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

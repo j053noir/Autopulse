@@ -1,10 +1,24 @@
-﻿namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
+﻿using AutoPulse.Domain.Entities;
+
+namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
 {
     public record AuctionDto(
-        Guid Id,
-        string VehicleModel,
-        decimal CurrentPrice,
-        DateTime EndTime,
-        bool IsActive
+        Guid? Id,
+        VehicleDto? Vehicle,
+        decimal? StartingPrice,
+        string? StartingPriceCurrency,
+        decimal? CurrentPrice,
+        string? CurrentPriceCurrency,
+        DateTime? EndTime,
+        bool? IsActive
+    );
+
+    public record VehicleDto(
+        Guid? Id,
+        string? VIN,
+        string? Marquee,
+        string? Model,
+        int? Year,
+        int? Mileage
     );
 }

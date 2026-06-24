@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="AutoPulse.Api/AutoPulse.Api.csproj" />
   <Project Path="AutoPulse.Application/AutoPulse.Application.csproj" />
+  <Project Path="AutoPulse.Domain/AutoPulse.Domain.csproj" />
+  <Project Path="AutoPulse.Infrastructure/AutoPulse.Infrastructure.csproj" />
 </Solution>

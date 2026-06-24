@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MediatR" Version="14.1.0" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Events\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AutoPulse.Domain\AutoPulse.Domain.csproj" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
 
 </Project>
