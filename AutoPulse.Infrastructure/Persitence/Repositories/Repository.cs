@@ -36,5 +36,10 @@ namespace AutoPulse.Infrastructure.Persitence.Repositories
         {
             _context.Set<T>().Update(entity);
         }
+
+        public async Task ReloadAsync(T entity, CancellationToken cancellationToken = default)
+        {
+            await _context.Entry(entity).ReloadAsync(cancellationToken);
+        }
     }
 }

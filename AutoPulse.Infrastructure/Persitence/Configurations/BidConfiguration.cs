@@ -12,6 +12,7 @@ namespace AutoPulse.Infrastructure.Persitence.Configurations
 
             builder.HasKey(b => b.Id);
 
+            // 1. Map "Amount" Value Object as Owned Type
             builder.OwnsOne(b => b.Amount, amount =>
             {
                 amount.Property(p => p.Amount).HasColumnName("BidAmount").HasPrecision(18, 2);

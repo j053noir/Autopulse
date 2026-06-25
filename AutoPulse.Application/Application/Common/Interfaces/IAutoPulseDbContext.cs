@@ -1,4 +1,6 @@
-﻿namespace AutoPulse.Application.Application.Common.Interfaces
+﻿using AutoPulse.Domain.Entities;
+
+namespace AutoPulse.Application.Application.Common.Interfaces
 {
     public interface IAutoPulseDbContext
     {

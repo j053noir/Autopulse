@@ -2,9 +2,9 @@
 
 namespace AutoPulse.Domain.Entities
 {
-    public class Vehicle : IAggregateRoot
+    public class Vehicle : BaseEntity
     {
-        public Guid Id { get; private set; }
+        public Auction? Auction { get; private set; }
         public string? VIN { get; private set; }
         public string? Marquee { get; private set; }
         public string? Model { get; private set; }
@@ -13,10 +13,10 @@ namespace AutoPulse.Domain.Entities
 
         public Vehicle() { }
 
-        private Vehicle(Guid id, string vIN, string marquee, string model, int year, int mileage)
+        private Vehicle(Guid id, string vin, string marquee, string model, int year, int mileage)
         {
             Id = id;
-            VIN = vIN;
+            VIN = vin;
             Marquee = marquee;
             Model = model;
             Year = year;
@@ -25,6 +25,8 @@ namespace AutoPulse.Domain.Entities
 
         public static Vehicle Create(Guid id, string vin, string marquee, string model, int year, int mileage)
         {
+            if (id == Guid.Empty) throw new ArgumentException("id is required");
+
             if (string.IsNullOrWhiteSpace(vin) || vin.Length != 17)
                 throw new ArgumentException("VIN must be exactly 17 characters.", nameof(vin));
 

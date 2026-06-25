@@ -1,12 +1,12 @@
-﻿using AutoPulse.Domain.Common;
+using AutoPulse.Domain.Common;
 using AutoPulse.Domain.ValueObjects;
 
 namespace AutoPulse.Domain.Entities
 {
-    public class Auction: IAggregateRoot
+    public class Auction: BaseEntity, IAggregateRoot
     {
         // Properties with private setters to prevent external manipulation
-        public Guid Id { get; private set; }
+        public Guid VehicleId { get; private set; }
         public Vehicle? Vehicle { get; private set; }
         public Money? StartingPrice { get; private set; }
         public Money? CurrentPrice { get; private set; }
@@ -14,7 +14,7 @@ namespace AutoPulse.Domain.Entities
         public bool? IsActive { get; private set; }
 
         // Concurrency Token
-        public byte[] RowVersion { get; private set; } = Array.Empty<byte>();
+        public uint RowVersion { get; private set; }
 
         // Encapsulated collection: readonly for external entities
         private readonly List<Bid> _bids = new();
@@ -27,7 +27,7 @@ namespace AutoPulse.Domain.Entities
             Id = id;
             Vehicle = vehicle;
             StartingPrice = startingPrice;
-            CurrentPrice = startingPrice;
+            CurrentPrice = startingPrice with { };
             EndTime = endTime;
             IsActive = true;
         }
@@ -43,17 +43,19 @@ namespace AutoPulse.Domain.Entities
             return new Auction(id, vehicle, startingPrice, endTime);
         }
 
-        public void PlaceBid(Guid bidderId, Money bidAmount)
+        public Bid PlaceBid(Guid bidderId, Money bidAmount)
         {
-            if ((IsActive.HasValue && IsActive.Value) || DateTime.UtcNow >= EndTime)
+            if ((IsActive.HasValue && !IsActive.Value) || DateTime.UtcNow >= EndTime)
                 throw new InvalidOperationException("Cannot place a bid on a closed or expired auction");
 
             if (CurrentPrice == null || bidAmount < CurrentPrice)
                 throw new InvalidOperationException("The bid amount must be higher than the current price");
 
-            var bid = new Bid(Guid.NewGuid(), bidderId, bidAmount, DateTime.UtcNow);
+            var bid = Bid.Create(this, bidderId, bidAmount, DateTimeOffset.UtcNow);
             _bids.Add(bid);
             CurrentPrice = bidAmount;
+
+            return bid;
         }
     }
 }

@@ -29,13 +29,13 @@ namespace AutoPulse.Infrastructure.Persitence.Configurations
             // 3. Configure 1:1 relationship with Vehicle
             builder.HasOne(a => a.Vehicle)
                     .WithMany()
-                    .HasForeignKey("VehicleId")
+                    .HasForeignKey(a => a.VehicleId)
                     .IsRequired();
 
             // 4. Configure 1:N relationship with Bids
             builder.HasMany(a => a.Bids)
-                    .WithOne()
-                    .HasForeignKey("AuctionId")
+                    .WithOne(b => b.Auction)
+                    .HasForeignKey(b => b.AuctionId)
                     .OnDelete(DeleteBehavior.Cascade);
 
             // 5. Configure concurrency token for optimistic locking

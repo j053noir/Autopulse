@@ -27,12 +27,28 @@ namespace AutoPulse.Domain.ValueObjects
 
             return a.Amount > b.Amount;
         }
+
         public static bool operator <(Money a, Money b)
         {
 
             if (a.CurrencyCode != b.CurrencyCode) throw new ArgumentException("Cannot compare Money with different currency code");
 
             return a.Amount < b.Amount;
+        }
+
+        public static bool operator >=(Money a, Money b)
+        {
+            if (a.CurrencyCode != b.CurrencyCode) throw new ArgumentException("Cannot compare Money with different currency code");
+
+            return a.Amount >= b.Amount;
+        }
+
+        public static bool operator <=(Money a, Money b)
+        {
+
+            if (a.CurrencyCode != b.CurrencyCode) throw new ArgumentException("Cannot compare Money with different currency code");
+
+            return a.Amount <= b.Amount;
         }
     }
 }

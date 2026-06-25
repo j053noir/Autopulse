@@ -1,4 +1,5 @@
 ﻿using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
+using AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -37,6 +38,19 @@ namespace AutoPulse.Api.Controllers
         public async Task<IDictionary<string, Guid>> Create([FromBody] CreateAuctionCommand command, CancellationToken cancellationToken)
         {
             var result = await _mediator.Send(command, cancellationToken);
+
+            return new Dictionary<string, Guid> { { "id", result } };
+        }
+
+        [HttpPost("{id:guid}/bids")]
+        public async Task<IDictionary<string, Guid>> Create(
+            [FromRoute] Guid id,
+            [FromBody] CreateAuctionBidCommand command, CancellationToken cancellationToken)
+        {
+            // Update auction id to use the one from the route parameter instead of the one from the request body
+            var updatedCommand = command with { auctionId = id };
+
+            var result = await _mediator.Send(updatedCommand, cancellationToken);
 
             return new Dictionary<string, Guid> { { "id", result } };
         }
