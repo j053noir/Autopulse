@@ -22,6 +22,11 @@ builder.Services.AddMediatR(cfg =>
     
 });
 
+builder.Services.AddOpenApi(options =>
+{
+    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+});
+
 var app = builder.Build();
 
 app.MapControllers();
