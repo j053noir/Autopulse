@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using AutoPulse.Application.Application.Auctions.Queries.Common.Dto;
+using MediatR;
 
 namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
 {

@@ -1,6 +1,6 @@
 ﻿using AutoPulse.Domain.Entities;
 
-namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
+namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
 {
     public record AuctionDto(
         Guid? Id,

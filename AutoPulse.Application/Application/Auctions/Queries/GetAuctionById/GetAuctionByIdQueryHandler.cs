@@ -1,4 +1,5 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+﻿using AutoPulse.Application.Application.Auctions.Queries.Common.Dto;
+using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities;
 using MediatR;

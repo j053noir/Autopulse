@@ -1,5 +1,7 @@
 ﻿using AutoPulse.Domain.Common;
 using AutoPulse.Domain.Common.Interfaces;
+using AutoPulse.Domain.Common.Specification;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPulse.Infrastructure.Persitence.Repositories
 {
@@ -15,11 +17,6 @@ namespace AutoPulse.Infrastructure.Persitence.Repositories
         public void Add(T entity)
         {
             _context.Set<T>().Add(entity);
-        }
-
-        public IQueryable<T> AsQueryable()
-        {
-            return _context.Set<T>().AsQueryable();
         }
 
         public void Delete(T entity)
@@ -40,6 +37,17 @@ namespace AutoPulse.Infrastructure.Persitence.Repositories
         public async Task ReloadAsync(T entity, CancellationToken cancellationToken = default)
         {
             await _context.Entry(entity).ReloadAsync(cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<T>> ListAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
+        {
+            var query = ApplySpecification(spec);
+            return await query.AsNoTracking().ToListAsync(cancellationToken);
+        }
+
+        private IQueryable<T> ApplySpecification(ISpecification<T> spec)
+        {
+            return SpecificationEvaluator<T>.GetQuery(_context.Set<T>().AsQueryable(), spec);
         }
     }
 }

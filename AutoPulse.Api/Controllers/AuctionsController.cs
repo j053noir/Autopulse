@@ -1,5 +1,6 @@
 ﻿using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid;
+using AutoPulse.Application.Application.Auctions.Queries.ActiveAuctionsWithVehicle;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +16,13 @@ namespace AutoPulse.Api.Controllers
         public AuctionsController(IMediator mediator)
         {
             _mediator = mediator;
+        }
+
+        [HttpGet("active")]
+        public async Task<IActionResult> GetActiveAuctions([FromQuery] GetAuctionWithVehicleQuery query, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
         }
 
         [HttpGet("{id:guid}")]
