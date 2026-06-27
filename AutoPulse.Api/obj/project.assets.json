@@ -2,6 +2,70 @@
   "version": 4,
   "targets": {
     "net10.0": {
+      "DbExceptionClassifier.Common/1.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/net10.0/DbExceptionClassifier.Common.dll": {
+            "related": ".pdb"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/DbExceptionClassifier.Common.dll": {
+            "related": ".pdb"
+          }
+        }
+      },
+      "DbExceptionClassifier.PostgreSQL/1.0.1": {
+        "type": "package",
+        "dependencies": {
+          "DbExceptionClassifier.Common": "1.0.1",
+          "Npgsql": "10.0.2"
+        },
+        "compile": {
+          "lib/net10.0/DbExceptionClassifier.PostgreSQL.dll": {
+            "related": ".pdb"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/DbExceptionClassifier.PostgreSQL.dll": {
+            "related": ".pdb"
+          }
+        }
+      },
+      "EntityFrameworkCore.Exceptions.Common/10.0.1": {
+        "type": "package",
+        "dependencies": {
+          "DbExceptionClassifier.Common": "1.0.1",
+          "Microsoft.EntityFrameworkCore.Relational": "10.0.5"
+        },
+        "compile": {
+          "lib/net10.0/EntityFrameworkCore.Exceptions.Common.dll": {
+            "related": ".pdb"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/EntityFrameworkCore.Exceptions.Common.dll": {
+            "related": ".pdb"
+          }
+        }
+      },
+      "EntityFrameworkCore.Exceptions.PostgreSQL/10.0.1": {
+        "type": "package",
+        "dependencies": {
+          "DbExceptionClassifier.PostgreSQL": "1.0.1",
+          "EntityFrameworkCore.Exceptions.Common": "10.0.1"
+        },
+        "compile": {
+          "lib/net10.0/EntityFrameworkCore.Exceptions.PostgreSQL.dll": {
+            "related": ".pdb"
+          }
+        },
+        "runtime": {
+          "lib/net10.0/EntityFrameworkCore.Exceptions.PostgreSQL.dll": {
+            "related": ".pdb"
+          }
+        }
+      },
       "Humanizer.Core/2.14.1": {
         "type": "package",
         "compile": {
@@ -809,6 +873,7 @@
         "dependencies": {
           "AutoPulse.Application": "1.0.0",
           "AutoPulse.Domain": "1.0.0",
+          "EntityFrameworkCore.Exceptions.PostgreSQL": "10.0.1",
           "Microsoft.EntityFrameworkCore": "10.0.9",
           "Microsoft.EntityFrameworkCore.Relational": "10.0.9"
         },
@@ -822,6 +887,70 @@
     }
   },
   "libraries": {
+    "DbExceptionClassifier.Common/1.0.1": {
+      "sha512": "Lz0R2s1+7iIin7TUvz4XjCg8zD0D8aLTAU3WfGnS+M5cEiIdNYmGWn1h7wZXpAzHh8Js4De7MLChp8qE2wl3ig==",
+      "type": "package",
+      "path": "dbexceptionclassifier.common/1.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "License.md",
+        "README.md",
+        "dbexceptionclassifier.common.1.0.1.nupkg.sha512",
+        "dbexceptionclassifier.common.nuspec",
+        "lib/net10.0/DbExceptionClassifier.Common.dll",
+        "lib/net10.0/DbExceptionClassifier.Common.pdb"
+      ]
+    },
+    "DbExceptionClassifier.PostgreSQL/1.0.1": {
+      "sha512": "bs2PvMf3kUMYPGJBMDwgUz3dO9MSa+DO765IsZbe2wAxc8zgfircZBqaWPNi4OxLe8zCX+azD0ySaBxKQa7xTQ==",
+      "type": "package",
+      "path": "dbexceptionclassifier.postgresql/1.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "License.md",
+        "README.md",
+        "dbexceptionclassifier.postgresql.1.0.1.nupkg.sha512",
+        "dbexceptionclassifier.postgresql.nuspec",
+        "lib/net10.0/DbExceptionClassifier.PostgreSQL.dll",
+        "lib/net10.0/DbExceptionClassifier.PostgreSQL.pdb"
+      ]
+    },
+    "EntityFrameworkCore.Exceptions.Common/10.0.1": {
+      "sha512": "dUuK9lJFQeLHqnPq5kTusu9MUIxvm3QVukwKDIB5ti0iaN6wBtm2SIQ4JNKU3ZneC6IQUEU57L6tWB+fB2IhCw==",
+      "type": "package",
+      "path": "entityframeworkcore.exceptions.common/10.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "License.md",
+        "README.md",
+        "entityframeworkcore.exceptions.common.10.0.1.nupkg.sha512",
+        "entityframeworkcore.exceptions.common.nuspec",
+        "lib/net10.0/EntityFrameworkCore.Exceptions.Common.dll",
+        "lib/net10.0/EntityFrameworkCore.Exceptions.Common.pdb"
+      ]
+    },
+    "EntityFrameworkCore.Exceptions.PostgreSQL/10.0.1": {
+      "sha512": "xB59v0MquOrRGh7FPwAyuVa+TkbmguWC6zYpaMOJE9uwC475BpXLctTdGXgxiQhwqPoq+i9yL6HQqnVFTBNutw==",
+      "type": "package",
+      "path": "entityframeworkcore.exceptions.postgresql/10.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "License.md",
+        "README.md",
+        "entityframeworkcore.exceptions.postgresql.10.0.1.nupkg.sha512",
+        "entityframeworkcore.exceptions.postgresql.nuspec",
+        "lib/net10.0/EntityFrameworkCore.Exceptions.PostgreSQL.dll",
+        "lib/net10.0/EntityFrameworkCore.Exceptions.PostgreSQL.pdb"
+      ]
+    },
     "Humanizer.Core/2.14.1": {
       "sha512": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw==",
       "type": "package",

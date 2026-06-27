@@ -1,9 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "EECDifuOc9E=",
+  "dgSpecHash": "V3ueMbeVRdY=",
   "success": true,
   "projectFilePath": "D:\\projects\\AutoPulse\\AutoPulse.Api\\AutoPulse.Api.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\j053_\\.nuget\\packages\\dbexceptionclassifier.common\\1.0.1\\dbexceptionclassifier.common.1.0.1.nupkg.sha512",
+    "C:\\Users\\j053_\\.nuget\\packages\\dbexceptionclassifier.postgresql\\1.0.1\\dbexceptionclassifier.postgresql.1.0.1.nupkg.sha512",
+    "C:\\Users\\j053_\\.nuget\\packages\\entityframeworkcore.exceptions.common\\10.0.1\\entityframeworkcore.exceptions.common.10.0.1.nupkg.sha512",
+    "C:\\Users\\j053_\\.nuget\\packages\\entityframeworkcore.exceptions.postgresql\\10.0.1\\entityframeworkcore.exceptions.postgresql.10.0.1.nupkg.sha512",
     "C:\\Users\\j053_\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\j053_\\.nuget\\packages\\mediatr\\14.1.0\\mediatr.14.1.0.nupkg.sha512",
     "C:\\Users\\j053_\\.nuget\\packages\\mediatr.contracts\\2.0.1\\mediatr.contracts.2.0.1.nupkg.sha512",
