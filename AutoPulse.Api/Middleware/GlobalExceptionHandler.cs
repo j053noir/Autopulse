@@ -1,4 +1,4 @@
-﻿using AutoPulse.Domain.Common.Exceptions;
+using AutoPulse.Domain.Common.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +41,10 @@ namespace AutoPulse.Api.Middleware
             // 3. Determine the appropriate HTTP status code based on the exception type
             var (statusCode, title, messageOverride) = exception switch
             {
+                // Handle database transient or connection failures as 500 Internal Server Error
+                Exception ex when IsTransientOrConnectionException(ex) =>
+                    (StatusCodes.Status500InternalServerError, "Database Connection Error", "A transient database or connection error occurred. Please try again later."),
+
                 // 3.a Domain Exceptions are custom exceptions that represent business rule violations or domain-specific errors.
                 DomainException domainEx =>
                 (domainEx.StatusCode, domainEx.Title, domainEx.Message),
@@ -107,6 +111,23 @@ namespace AutoPulse.Api.Middleware
 
             // 9. Indicate that the exception has been handled
             return true;
+        }
+
+        private static bool IsTransientOrConnectionException(Exception? exception)
+        {
+            while (exception != null)
+            {
+                var typeName = exception.GetType().Name;
+                if (typeName == "NpgsqlException" ||
+                    typeName == "SocketException" ||
+                    exception.Message.Contains("transient failure", StringComparison.OrdinalIgnoreCase) ||
+                    exception.Message.Contains("Failed to connect", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+                exception = exception.InnerException;
+            }
+            return false;
         }
     }
 }

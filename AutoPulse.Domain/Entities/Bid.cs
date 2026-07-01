@@ -8,9 +8,10 @@ namespace AutoPulse.Domain.Entities
         public Guid AuctionId { get; private set; }
         public Auction? Auction { get; private set; }
         public Guid BidderId { get; private set; }
+        public User? Bidder { get; private set; }
         public Money? Amount { get; private set; }
 
-        public Bid() { }
+        private Bid() { }
 
         private Bid(Guid id, Guid auctionId, Guid bidderId, Money amount, DateTimeOffset? createdAt)
         {

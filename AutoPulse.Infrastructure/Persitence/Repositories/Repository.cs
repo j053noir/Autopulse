@@ -29,6 +29,13 @@ namespace AutoPulse.Infrastructure.Persitence.Repositories
             return await _context.Set<T>().FindAsync([id], cancellationToken);
         }
 
+        public async Task<T?> GetByIdAsync(ISpecification<T> spec, CancellationToken cancellationToken = default)
+        {
+            var query = ApplySpecification(spec);
+
+            return await query?.FirstOrDefaultAsync(cancellationToken);
+        }
+
         public void Update(T entity)
         {
             _context.Set<T>().Update(entity);

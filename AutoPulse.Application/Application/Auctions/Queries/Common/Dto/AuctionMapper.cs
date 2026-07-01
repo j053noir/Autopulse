@@ -6,6 +6,14 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
     {
         public static AuctionDto Map(Auction auction)
         {
+            var AuctioneerDto = auction.Auctioneer != null
+                ? new AuctioneerDto(
+                    auction.Auctioneer.Id,
+                    auction.Auctioneer.UserName,
+                    auction.Auctioneer.Email,
+                    auction.Auctioneer.IsActive
+                )
+                : null;
             var vehicleDto = auction.Vehicle != null
                 ? new VehicleDto(
                     auction.Vehicle.Id,
@@ -18,6 +26,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
                 : null;
             return new AuctionDto(
                 auction.Id,
+                AuctioneerDto,
                 vehicleDto,
                 auction.StartingPrice?.Amount,
                 auction.StartingPrice?.CurrencyCode,

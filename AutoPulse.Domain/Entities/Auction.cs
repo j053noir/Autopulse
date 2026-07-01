@@ -12,6 +12,8 @@ namespace AutoPulse.Domain.Entities
         public Money? CurrentPrice { get; private set; }
         public DateTime? EndTime { get; private set; }
         public bool? IsActive { get; private set; }
+        public Guid AuctioneerId { get; private set; }
+        public User? Auctioneer { get; private set; }
 
         // Concurrency Token
         public uint RowVersion { get; private set; }
@@ -22,17 +24,18 @@ namespace AutoPulse.Domain.Entities
 
         public Auction () { }
 
-        private Auction(Guid id, Vehicle vehicle, Money startingPrice, DateTime endTime)
+        private Auction(Guid id, Guid auctioneerId, Vehicle vehicle, Money startingPrice, DateTime endTime)
         {
             Id = id;
             Vehicle = vehicle;
             StartingPrice = startingPrice;
             CurrentPrice = startingPrice with { };
             EndTime = endTime;
+            AuctioneerId = auctioneerId;
             IsActive = true;
         }
 
-        public static Auction Create(Guid id, Vehicle vehicle, Money startingPrice, DateTime endTime)
+        public static Auction Create(Guid id, Guid auctioneerId, Vehicle vehicle, Money startingPrice, DateTime endTime)
         {
             ArgumentNullException.ThrowIfNull(vehicle);
             ArgumentNullException.ThrowIfNull(startingPrice);
@@ -40,7 +43,7 @@ namespace AutoPulse.Domain.Entities
             if (endTime <= DateTime.UtcNow)
                 throw new ArgumentException("End time must be in the future.", nameof(endTime));
 
-            return new Auction(id, vehicle, startingPrice, endTime);
+            return new Auction(id, auctioneerId, vehicle, startingPrice, endTime);
         }
 
         public Bid PlaceBid(Guid bidderId, Money bidAmount)

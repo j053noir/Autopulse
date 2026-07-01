@@ -5,9 +5,9 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
 {
     public record CreateAuctionBidCommand
     (
-        Guid auctionId,
-        Guid bidderId,
-        decimal amount,
+        Guid AuctionId,
+        Guid AuctioneerId,
+        decimal Amount,
         Guid IdempotencyKey
     ) : IRequest<Guid>, IIdempotentCommand;
 }

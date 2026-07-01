@@ -41,6 +41,12 @@ namespace AutoPulse.Infrastructure.Persitence.Configurations
             // 5. Configure concurrency token for optimistic locking
             builder.Property(a => a.RowVersion)
                     .IsRowVersion();
+            
+            // 6. Configure auctioneer
+            builder.HasOne(a => a.Auctioneer)
+                .WithMany()
+                .HasForeignKey(a => a.AuctioneerId)
+                .IsRequired();
 
         }
 

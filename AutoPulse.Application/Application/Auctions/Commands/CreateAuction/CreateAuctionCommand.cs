@@ -12,6 +12,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
         int Year,
         int Mileage,
         // Auction,
+        Guid AuctioneerId,
         decimal StartingPrice,
         DateTime EndTime,
         Guid IdempotencyKey
