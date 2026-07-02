@@ -10,11 +10,17 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
     {
         private readonly IRepository<Auction> _auctionRepository;
         private readonly IAutoPulseDbContext _context;
+        private readonly ICacheService _cacheService;
 
-        public CreateAuctionCommandHandler(IRepository<Auction> auctionRepository, IAutoPulseDbContext context)
+        public CreateAuctionCommandHandler(
+            IRepository<Auction> auctionRepository, 
+            IAutoPulseDbContext context,
+            ICacheService cacheService
+        )
         {
             _auctionRepository = auctionRepository;
             _context = context;
+            _cacheService = cacheService;
         }
 
         public async Task<Guid> Handle(CreateAuctionCommand request, CancellationToken cancellationToken)
@@ -33,8 +39,13 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
             // 4. Save changes to the database
             await _context.SaveChangesAsync(cancellationToken);
 
+            var cacheKey = GetCacheKey();
+            await _cacheService.RemoveAsync(cacheKey, cancellationToken); // Invalidate the cache for the list of active auctions
+
             // 5. Return the new resource Id
             return auctionId;
         }
+
+        private string GetCacheKey() => $"auctions:list_active";
     }
 }

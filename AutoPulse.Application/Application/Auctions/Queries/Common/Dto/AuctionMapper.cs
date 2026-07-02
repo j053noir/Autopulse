@@ -4,6 +4,26 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
 {
     internal static class AuctionMapper
     {
+        /// <summary>
+        /// Returns a placeholder AuctionDto with default values for all properties.
+        /// </summary>
+        /// <returns></returns>
+        public static AuctionDto NullPlaceholder()
+        {
+            return new AuctionDto(
+                Guid.Empty, // Id
+                null, // Auctioneer
+                null, // Vehicle
+                decimal.Zero, // StartingPrice
+                string.Empty, // StartingPriceCurrency
+                decimal.Zero, // CurrentPrice
+                string.Empty, // CurrentPriceCurrency
+                DateTime.MinValue, // EndTime
+                false, // IsActive
+                null // Bids
+            );
+        }
+
         public static AuctionDto Map(Auction auction)
         {
             var AuctioneerDto = auction.Auctioneer != null
@@ -24,6 +44,13 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
                     auction.Vehicle.Mileage
                 )
                 : null;
+            var bidDtos = auction.Bids?.Select(bid => new BidDto(
+                bid.Id,
+                bid.BidderId,
+                bid.Amount?.Amount,
+                bid.Amount?.CurrencyCode,
+                bid.CreatedAt.DateTime
+            )).ToList();
             return new AuctionDto(
                 auction.Id,
                 AuctioneerDto,
@@ -33,7 +60,8 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
                 auction.CurrentPrice?.Amount,
                 auction.CurrentPrice?.CurrencyCode,
                 auction.EndTime,
-                auction.IsActive
+                auction.IsActive,
+                bidDtos
             );
         }
 

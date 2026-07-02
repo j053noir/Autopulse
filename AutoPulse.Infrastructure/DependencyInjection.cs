@@ -1,6 +1,7 @@
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Infrastructure.Authentication;
+using AutoPulse.Infrastructure.Cache;
 using AutoPulse.Infrastructure.Persitence;
 using AutoPulse.Infrastructure.Persitence.Repositories;
 using AutoPulse.Infrastructure.Security;
@@ -33,6 +34,7 @@ namespace AutoPulse.Infrastructure
                 options.Configuration = configuration.GetConnectionString("RedisConnection");
             });
 
+            services.AddScoped<ICacheService, ValkeyCacheService>();
             services.AddScoped<IPermissionCacheService, PermissionCacheService>();
 
             services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();

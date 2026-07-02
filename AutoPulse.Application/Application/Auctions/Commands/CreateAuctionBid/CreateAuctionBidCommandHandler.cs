@@ -11,15 +11,18 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
     {
         private readonly IRepository<Auction> _auctionRepository;
         private readonly IAutoPulseDbContext _context;
+        private readonly ICacheService _cacheService;
 
         public CreateAuctionBidCommandHandler
         (
             IRepository<Auction> auctionRepository,
-            IAutoPulseDbContext context
+            IAutoPulseDbContext context,
+            ICacheService cacheService
         )
         {
             _auctionRepository = auctionRepository;
             _context = context;
+            _cacheService = cacheService;
         }
 
         public async Task<Guid> Handle(CreateAuctionBidCommand request, CancellationToken cancellationToken)
@@ -38,16 +41,21 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
             {
                 // 5. Save changes to the database
                 await _context.SaveChangesAsync(cancellationToken);
+
+                var cacheKey = GetCacheKey(request.AuctionId);
+                // 6. Invalidate the cache for the auction details
+                await _cacheService.RemoveAsync(cacheKey, cancellationToken);
             }
             catch (DbUpdateConcurrencyException)
             {
-                // 5.1 Handle the conflict gracefully
+                // 7. Handle the conflict gracefully
                 throw new Exception("The auction was updated by another user while you were placing your bid. Please try again.");
-            }
-            
+            }            
 
-            // 6. Return the new resource Id
+            // 8. Return the new resource Id
             return bid.Id;
         }
+
+        private string GetCacheKey(Guid auctionId) => $"auctions:detail:{auctionId}";
     }
 }

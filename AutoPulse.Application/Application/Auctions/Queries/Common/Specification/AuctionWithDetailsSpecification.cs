@@ -10,6 +10,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Specificatio
         {
             AddInclude(a => a.Auctioneer);
             AddInclude(a => a.Vehicle);
+            AddInclude(a => a.Bids);
         }
     }
 }
