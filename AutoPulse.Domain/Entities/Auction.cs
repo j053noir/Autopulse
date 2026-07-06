@@ -3,7 +3,7 @@ using AutoPulse.Domain.ValueObjects;
 
 namespace AutoPulse.Domain.Entities
 {
-    public class Auction: BaseEntity, IAggregateRoot
+    public class Auction : BaseEntity, IAggregateRoot
     {
         // Properties with private setters to prevent external manipulation
         public Guid VehicleId { get; private set; }
@@ -14,6 +14,8 @@ namespace AutoPulse.Domain.Entities
         public bool? IsActive { get; private set; }
         public Guid AuctioneerId { get; private set; }
         public User? Auctioneer { get; private set; }
+        public Guid? WinnerId { get; private set; }
+        public User? Winner { get; private set; }
 
         // Concurrency Token
         public uint RowVersion { get; private set; }
@@ -22,7 +24,7 @@ namespace AutoPulse.Domain.Entities
         private readonly List<Bid> _bids = new();
         public IReadOnlyCollection<Bid> Bids => _bids.AsReadOnly();
 
-        public Auction () { }
+        public Auction() { }
 
         private Auction(Guid id, Guid auctioneerId, Vehicle vehicle, Money startingPrice, DateTime endTime)
         {
@@ -59,6 +61,15 @@ namespace AutoPulse.Domain.Entities
             CurrentPrice = bidAmount;
 
             return bid;
+        }
+
+        public void Close()
+        {
+            if (IsActive.HasValue && !IsActive.Value)
+                throw new InvalidOperationException("Auction is already closed");
+            IsActive = false;
+
+            WinnerId = _bids.OrderByDescending(b => b.Amount).FirstOrDefault()?.BidderId;
         }
     }
 }
