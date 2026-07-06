@@ -1,13 +1,41 @@
 ﻿using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
 namespace AutoPulse.Infrastructure.Persitence
 {
     public class AutoPulseDbContext : DbContext, IAutoPulseDbContext
     {
-        public AutoPulseDbContext(DbContextOptions<AutoPulseDbContext> options) : base(options) { }
+        private readonly IConfiguration _configuration;
+        private bool _isReadonlyMode;
+
+        public AutoPulseDbContext(
+            DbContextOptions<AutoPulseDbContext> options,
+            IConfiguration configuration) : base(options)
+        {
+            _configuration = configuration;
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                string connectionString = _isReadonlyMode
+                    ? _configuration.GetConnectionString("SlaveDatabaseConnection")
+                    : _configuration.GetConnectionString("MasterDatabaseConnection");
+
+                optionsBuilder.UseNpgsql(connectionString);
+            }
+
+            base.OnConfiguring(optionsBuilder);
+        }
+
+        public void UseReadOnlyDatabase(bool isReadOnly)
+        {
+            _isReadonlyMode = isReadOnly;
+        }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

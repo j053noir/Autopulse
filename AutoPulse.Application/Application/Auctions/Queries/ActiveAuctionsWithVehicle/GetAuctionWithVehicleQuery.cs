@@ -1,5 +1,5 @@
 ﻿using AutoPulse.Application.Application.Auctions.Queries.Common.Dto;
-using MediatR;
+using AutoPulse.Application.Application.Common.Interfaces;
 
 namespace AutoPulse.Application.Application.Auctions.Queries.ActiveAuctionsWithVehicle
 {
@@ -18,5 +18,5 @@ namespace AutoPulse.Application.Application.Auctions.Queries.ActiveAuctionsWithV
             string? Marquee,
             int? MinYear,
             decimal? MaxPrice
-        ) : IRequest<IReadOnlyList<AuctionDto?>>;
+        ) : IReadOnlyQuery<IReadOnlyList<AuctionDto?>>;
 }

@@ -1,10 +1,10 @@
 ﻿using AutoPulse.Application.Application.Authentication.Queries.LoginUser.Dto;
-using MediatR;
+using AutoPulse.Application.Application.Common.Interfaces;
 
 namespace AutoPulse.Application.Application.Authentication.Queries.LoginUser
 {
     public record LoginUserQuery(
         string Email,
         string Password
-        ) : IRequest<AuthDto?>;
+        ) : IReadOnlyQuery<AuthDto?>;
 }

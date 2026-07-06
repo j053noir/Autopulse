@@ -49,6 +49,9 @@ builder.Services.AddMediatR(cfg =>
 {
     cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
 
+    // Database behavior
+    cfg.AddOpenBehavior(typeof(ReadOnlyDatabaseBehavior<,>));
+
     // Auction
     cfg.RegisterServicesFromAssembly(typeof(CreateAuctionCommand).Assembly);
 

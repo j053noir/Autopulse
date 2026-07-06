@@ -1,3 +1,4 @@
+using AutoPulse.Application.Application.Common.Behaviors;
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Infrastructure.Authentication;
@@ -8,6 +9,7 @@ using AutoPulse.Infrastructure.Persitence;
 using AutoPulse.Infrastructure.Persitence.Repositories;
 using AutoPulse.Infrastructure.Security;
 using EntityFramework.Exceptions.PostgreSQL;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +23,7 @@ namespace AutoPulse.Infrastructure
         {
             services.AddDbContext<AutoPulseDbContext>(options =>
             {
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+                options.UseNpgsql(configuration.GetConnectionString("MasterDatabaseConnection"));
                 options.UseExceptionProcessor();
             });
 
@@ -33,7 +35,7 @@ namespace AutoPulse.Infrastructure
 
             services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = configuration.GetConnectionString("RedisConnection");
+                options.Configuration = configuration.GetConnectionString("CacheConnection");
             });
 
             services.AddScoped<ICacheService, ValkeyCacheService>();
