@@ -51,7 +51,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
 
                 // 5. Query in the DB
                 var spec = new AuctionWithDetailsSpecification(request.Id);
-                var entity = await _auctionRepository.GetByIdAsync(spec, cancellationToken);
+                var entity = await _auctionRepository.GetBySpecAsync(spec, cancellationToken);
 
                 // 6. Return null if entity not found
                 if (entity is null)
@@ -74,6 +74,10 @@ namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
             finally
             {
                 semaphore.Release();
+                if (semaphore.CurrentCount > 0)
+                {
+                    Locks.TryRemove(request.Id, out _);
+                }
             }
         }
 

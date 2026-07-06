@@ -2,6 +2,8 @@ using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Infrastructure.Authentication;
 using AutoPulse.Infrastructure.Cache;
+using AutoPulse.Infrastructure.Notification;
+using AutoPulse.Infrastructure.Payments;
 using AutoPulse.Infrastructure.Persitence;
 using AutoPulse.Infrastructure.Persitence.Repositories;
 using AutoPulse.Infrastructure.Security;
@@ -36,6 +38,10 @@ namespace AutoPulse.Infrastructure
 
             services.AddScoped<ICacheService, ValkeyCacheService>();
             services.AddScoped<IPermissionCacheService, PermissionCacheService>();
+
+            // TODO: Replace MockEmailService and MockPaymentService with real implementations when available
+            services.AddScoped<IEmailService, MockEmailService>();
+            services.AddScoped<IPaymentService, MockPaymentService>();
 
             services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
             services.AddSingleton<IAuthorizationPolicyProvider, DynamicPermissionPolicyProvider>();
