@@ -30,10 +30,11 @@ namespace AutoPulse.Domain.Entities
             };
         }
 
-        public void Complete(bool isSuccess, string? errorMessage = null)
+        public void Complete(string transactionReference, bool isSuccess, string? errorMessage = null)
         {
             if (ProcessedAt is not null) throw new InvalidOperationException("This transaction has already been completed");
 
+            TransactionReference = transactionReference;
             IsSuccess = isSuccess;
             ErrorMessage = errorMessage;
             ProcessedAt = DateTime.UtcNow;

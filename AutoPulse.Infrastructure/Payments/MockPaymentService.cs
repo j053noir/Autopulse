@@ -2,8 +2,12 @@
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Common.Specification;
 using AutoPulse.Domain.Entities;
+using AutoPulse.Infrastructure.Resilience;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Registry;
 
 namespace AutoPulse.Infrastructure.Payments
 {
@@ -20,17 +24,20 @@ namespace AutoPulse.Infrastructure.Payments
         private readonly ICacheService _cacheService;
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<MockPaymentService> _logger;
+        private readonly ResiliencePipeline _resiliencePipeline;
 
         public MockPaymentService
         (
             ICacheService cacheService,
             ILogger<MockPaymentService> logger,
-            IServiceProvider serviceProvider
+            IServiceProvider serviceProvider,
+            ResiliencePipelineProvider<string> pipelineProvider
         )
         {
             _cacheService = cacheService;
             _logger = logger;
             _serviceProvider = serviceProvider;
+            _resiliencePipeline = pipelineProvider.GetPipeline(ResilienceConfiguration.GatewayPaymentPolicy);
         }
 
         public async Task<PaymentResponse> GetPaymentResponseAsync(PaymentRequest paymentRequest, CancellationToken cancellationToken = default)
@@ -101,7 +108,7 @@ namespace AutoPulse.Infrastructure.Payments
             }
             catch (Exception dbEx)
             {
-                _logger.LogCritical(dbEx, "Catastrophic failure: Relational database query failed for TransactionId: {TransactionId}");
+                _logger.LogCritical(dbEx, $"Catastrophic failure: Relational database query failed for TransactionId: {paymentRequest.TransactionId}");
                 return null;
             }
         }
@@ -131,18 +138,47 @@ namespace AutoPulse.Infrastructure.Payments
 
         private async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest paymentRequest, IServiceScope scope, CancellationToken cancellationToken = default)
         {
-            await StartProcessingPaymentAsync(paymentRequest, scope, cancellationToken);
+            var transactionEntity = await StartProcessingPaymentAsync(paymentRequest, scope, cancellationToken);
 
-            var paymentResponse = await SendRequestToPaymentGatewayAsync(paymentRequest, cancellationToken);
+            PaymentResponse paymentResponse;
 
-            await SavePaymentResponse(paymentRequest, paymentResponse, scope, cancellationToken);
+            try
+            {
+                paymentResponse = await _resiliencePipeline.ExecuteAsync(async token =>
+                    await SendRequestToPaymentGatewayAsync(paymentRequest, token), cancellationToken);
+            }
+            catch (BrokenCircuitException bcEx)
+            {
+                _logger.LogWarning($"Payment Gateway circuit is OPEN. Fast-failing transaction {paymentRequest.TransactionId}. Reason: {bcEx.Message}");
+
+                paymentResponse = new PaymentResponse(
+                    IsSuccess: false,
+                    TransactionReference: $"FAIL_CIRCUIT_{Guid.NewGuid().ToString()[..8].ToUpper()}",
+                    ErrorMessage: "Payment service is temporarily unavailable due to high failure rates.",
+                    ProcessedAt: DateTime.UtcNow
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Resilience pipeline intercepted a failure or timeout for TransactionId: {paymentRequest.TransactionId}");
+
+
+                paymentResponse = new PaymentResponse(
+                    IsSuccess: false,
+                    TransactionReference: $"FAIL_{Guid.NewGuid().ToString()[..8].ToUpper()}",
+                    ErrorMessage: $"Polly Resilient Interception: {ex.Message}",
+                    ProcessedAt: DateTime.UtcNow
+                );
+            }
+
+            await SavePaymentResponse(paymentRequest, paymentResponse, transactionEntity, scope, cancellationToken);
 
             return paymentResponse;
         }
 
-        private async Task StartProcessingPaymentAsync(PaymentRequest paymentRequest, IServiceScope scope, CancellationToken cancellationToken = default)
+        private async Task<ProcessedTransaction> StartProcessingPaymentAsync(PaymentRequest paymentRequest, IServiceScope scope, CancellationToken cancellationToken = default)
         {
-            var processedTransaction = ProcessedTransaction.Create(Guid.NewGuid(), paymentRequest.TransactionId.ToString());
+            var processedTransaction = ProcessedTransaction.Create(paymentRequest.TransactionId, paymentRequest.TransactionId.ToString());
 
             try
             {
@@ -155,6 +191,8 @@ namespace AutoPulse.Infrastructure.Payments
                 await dbContext.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Processed payment started for TransactionId: {TransactionId}, TransactionReference: {TransactionReference}", paymentRequest.TransactionId, processedTransaction.TransactionReference);
+
+                return processedTransaction;
             }
             catch (Exception ex)
             {
@@ -179,27 +217,26 @@ namespace AutoPulse.Infrastructure.Payments
 
             return paymentResponse;
         }
-        private async Task SavePaymentResponse(PaymentRequest paymentRequest, PaymentResponse paymentResponse, IServiceScope scope, CancellationToken cancellationToken)
+        private async Task SavePaymentResponse
+        (
+            PaymentRequest paymentRequest,
+            PaymentResponse paymentResponse,
+            ProcessedTransaction processedTransaction,
+            IServiceScope scope,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
-                // 1. Retrieve the processed transaction from the database
-                var processedTransactionRepository = scope.ServiceProvider.GetRequiredService<IRepository<ProcessedTransaction>>();
-                var spec = new ProcessedTransactionSpecification(paymentRequest.TransactionId.ToString());
-                var processedTransaction = await processedTransactionRepository.GetBySpecAsync(spec, cancellationToken);
+                // 1. Update the processed transaction with the payment response details
+                processedTransaction.Complete(paymentResponse.TransactionReference, paymentResponse.IsSuccess, paymentResponse.ErrorMessage);
 
-                if (processedTransaction is null) throw new KeyNotFoundException($"Processed transaction with Id {paymentResponse.TransactionReference} not found.");
-
-                // 2. Update the processed transaction with the payment response details
-                processedTransaction.Complete(paymentResponse.IsSuccess, paymentResponse.ErrorMessage);
-
-                // 3. Save changes to the database
+                // 2. Save changes to the database
                 var dbContext = scope.ServiceProvider.GetRequiredService<IAutoPulseDbContext>();
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                // 4. Cache the payment response for future requests
+                // 3. Cache the payment response for future requests
                 await AddTransactionToCacheAsync(paymentRequest, paymentResponse, cancellationToken);
-
             }
             catch (Exception ex)
             {

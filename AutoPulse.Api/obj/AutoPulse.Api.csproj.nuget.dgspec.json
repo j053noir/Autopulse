@@ -1292,9 +1292,21 @@
               "target": "Package",
               "version": "[6.0.1, )"
             },
+            "Microsoft.Extensions.Http.Resilience": {
+              "target": "Package",
+              "version": "[10.7.0, )"
+            },
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[3.9.0, )"
+            },
+            "Polly": {
+              "target": "Package",
+              "version": "[8.7.0, )"
+            },
+            "Polly.Extensions": {
+              "target": "Package",
+              "version": "[8.7.0, )"
             }
           },
           "imports": [

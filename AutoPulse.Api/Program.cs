@@ -2,6 +2,7 @@ using AutoPulse.Api.Middleware;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Common.Behaviors;
 using AutoPulse.Infrastructure;
+using AutoPulse.Infrastructure.Resilience;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,6 +24,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddResiliencePipelines();
 
 builder.Services.AddAuthentication(options =>
 {
