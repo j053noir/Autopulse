@@ -1,10 +1,10 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
 
-namespace AutoPulse.Infrastructure.Persitence
+namespace AutoPulse.Infrastructure.Persistence.Sql
 {
     public class AutoPulseDbContext : DbContext, IAutoPulseDbContext
     {

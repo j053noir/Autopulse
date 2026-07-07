@@ -1,9 +1,9 @@
-﻿using AutoPulse.Domain.Common;
+using AutoPulse.Domain.Common;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Common.Specification;
 using Microsoft.EntityFrameworkCore;
 
-namespace AutoPulse.Infrastructure.Persitence.Repositories
+namespace AutoPulse.Infrastructure.Persistence.Sql.Repositories
 {
     public class Repository<T> : IRepository<T> where T : class, IAggregateRoot
     {

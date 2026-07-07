@@ -2,7 +2,7 @@ using AutoPulse.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace AutoPulse.Infrastructure.Persitence.Configurations
+namespace AutoPulse.Infrastructure.Persistence.Sql.Configurations
 {
     internal class UserConfiguration : IEntityTypeConfiguration<User>
     {

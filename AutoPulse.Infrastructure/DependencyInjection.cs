@@ -1,15 +1,14 @@
-using AutoPulse.Application.Application.Common.Behaviors;
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Infrastructure.Authentication;
 using AutoPulse.Infrastructure.Cache;
 using AutoPulse.Infrastructure.Notification;
 using AutoPulse.Infrastructure.Payments;
-using AutoPulse.Infrastructure.Persitence;
-using AutoPulse.Infrastructure.Persitence.Repositories;
+using AutoPulse.Infrastructure.Persistence.NoSql.Repositories;
+using AutoPulse.Infrastructure.Persistence.Sql;
+using AutoPulse.Infrastructure.Persistence.Sql.Repositories;
 using AutoPulse.Infrastructure.Security;
 using EntityFramework.Exceptions.PostgreSQL;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,6 +29,8 @@ namespace AutoPulse.Infrastructure
             // open typeof(,<>) tells to .NET to resolve any combiation of IRepository<T>
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IAutoPulseDbContext>(provider => provider.GetRequiredService<AutoPulseDbContext>());
+
+            services.AddScoped(typeof(INoSqlRepository<>), typeof(NoSqlRepository<>));
 
             services.AddScoped<IJwtProvider, JwtProvider>();
 

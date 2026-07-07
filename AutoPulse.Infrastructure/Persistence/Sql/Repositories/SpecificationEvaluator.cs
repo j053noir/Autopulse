@@ -1,7 +1,7 @@
-﻿using AutoPulse.Domain.Common.Specification;
+using AutoPulse.Domain.Common.Specification;
 using Microsoft.EntityFrameworkCore;
 
-namespace AutoPulse.Infrastructure.Persitence.Repositories
+namespace AutoPulse.Infrastructure.Persistence.Sql.Repositories
 {
     public static class SpecificationEvaluator<T> where T : class
     {
