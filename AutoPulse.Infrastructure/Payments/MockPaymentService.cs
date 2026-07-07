@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
+using Polly.RateLimiting;
 using Polly.Registry;
 
 namespace AutoPulse.Infrastructure.Payments
@@ -146,6 +147,19 @@ namespace AutoPulse.Infrastructure.Payments
             {
                 paymentResponse = await _resiliencePipeline.ExecuteAsync(async token =>
                     await SendRequestToPaymentGatewayAsync(paymentRequest, token), cancellationToken);
+            }
+            catch(RateLimiterRejectedException rateEx)
+            {
+                _logger.LogWarning(rateEx, $"Concurrency limit reached! Rolling back transaction entry for TransactionId: {paymentRequest.TransactionId} to retry later");
+
+                // Rollback
+                var processedTransactionRepository = scope.ServiceProvider.GetRequiredService<IRepository<ProcessedTransaction>>();
+                processedTransactionRepository.Delete(transactionEntity);
+
+                var dbContext = scope.ServiceProvider.GetRequiredService<IAutoPulseDbContext>();
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                throw;
             }
             catch (BrokenCircuitException bcEx)
             {
