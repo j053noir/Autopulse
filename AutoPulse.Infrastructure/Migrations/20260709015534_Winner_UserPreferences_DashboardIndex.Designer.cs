@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using AutoPulse.Infrastructure.Persistence.Sql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AutoPulse.Infrastructure.Migrations
 {
     [DbContext(typeof(AutoPulseDbContext))]
-    partial class AutoPulseDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260709015534_Winner_UserPreferences_DashboardIndex")]
+    partial class Winner_UserPreferences_DashboardIndex
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -59,7 +59,7 @@ namespace AutoPulse.Application.Application.Authentication.Queries.LoginUser
             if (!double.TryParse(_configuration.GetRequiredSection("Jwt:DurationInMinutes")?.Value, out double expiresIn)) throw new InvalidOperationException("Missing configuration: Jwt.DurationInMinutes");
 
             var ttl = TimeSpan.FromMinutes(expiresIn);
-            await _permissionCacheService.ServicePermissionsAsync(user.Id, [.. user.Permissions], ttl);
+            await _permissionCacheService.ServicePermissionsAsync(user.Id, [.. user.Permissions], ttl, cancellationToken);
 
             var authDto = new AuthDto(token, expiresIn);
 

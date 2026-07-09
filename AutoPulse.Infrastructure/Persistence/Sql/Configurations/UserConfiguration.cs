@@ -19,10 +19,14 @@ namespace AutoPulse.Infrastructure.Persistence.Sql.Configurations
             builder.HasIndex(u => u.Email).IsUnique();
 
             // 3. Configure 1:N relationship with Bids
-            builder.HasMany(a => a.Bids)
+            builder.HasMany(u => u.Bids)
                     .WithOne(b => b.Bidder)
                     .HasForeignKey(b => b.BidderId)
                     .OnDelete(DeleteBehavior.Cascade);
+
+            // 4. Default "credit_card" value for preferred payment method
+            builder.Property(u => u.PreferredPaymentMethod)
+                    .HasDefaultValue("credit_card");
         }
 
     }

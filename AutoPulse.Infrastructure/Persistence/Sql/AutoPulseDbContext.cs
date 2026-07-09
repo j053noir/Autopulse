@@ -1,5 +1,6 @@
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common;
+using AutoPulse.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Reflection;
@@ -10,6 +11,8 @@ namespace AutoPulse.Infrastructure.Persistence.Sql
     {
         private readonly IConfiguration _configuration;
         private bool _isReadonlyMode;
+
+        public DbSet<Auction> Auctions { get; set; }
 
         public AutoPulseDbContext(
             DbContextOptions<AutoPulseDbContext> options,

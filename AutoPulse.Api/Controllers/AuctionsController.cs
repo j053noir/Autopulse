@@ -1,10 +1,13 @@
-﻿using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
+using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid;
 using AutoPulse.Application.Application.Auctions.Queries.ActiveAuctionsWithVehicle;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionById;
+using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard;
+using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard.Dto;
 using AutoPulse.Domain.Common.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPulse.Api.Controllers
@@ -31,6 +34,33 @@ namespace AutoPulse.Api.Controllers
         public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             var query = new GetAuctionByIdQuery(id);
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result is null)
+            {
+                return NotFound(new
+                {
+                    Message = $"Auction with ID {id} was not found"
+                });
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Retrieves the dashboard details for a specific auction, including bids history.
+        /// </summary>
+        /// <param name="id">The unique identifier of the auction.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The auction dashboard details.</returns>
+        /// <response code="200">Returns the auction dashboard details.</response>
+        /// <response code="404">If the auction was not found.</response>
+        [HttpGet("{id:guid}/dashboard")]
+        [ProducesResponseType(typeof(AuctionDashboardDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetDashboard([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var query = new GetAuctionDashboardQuery(id);
             var result = await _mediator.Send(query, cancellationToken);
 
             if (result is null)

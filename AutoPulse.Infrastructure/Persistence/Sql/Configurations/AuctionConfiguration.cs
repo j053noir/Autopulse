@@ -48,6 +48,13 @@ namespace AutoPulse.Infrastructure.Persistence.Sql.Configurations
                 .HasForeignKey(a => a.AuctioneerId)
                 .IsRequired();
 
+            // 7. Create Index for dashboard
+            builder.HasIndex(a => new { a.IsActive, a.EndTime })
+                    .HasDatabaseName("IX_Auctions_IsActive_EndTime");
+
+            // 8. Soft delete filter mapping
+            builder.HasQueryFilter(a => a.DeletedAt == null);
+
         }
 
     }

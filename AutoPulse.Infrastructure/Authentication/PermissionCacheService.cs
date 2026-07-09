@@ -14,35 +14,35 @@ namespace AutoPulse.Infrastructure.Authentication
             _cache = cache;
         }
 
-        public async Task<HashSet<string>?> GetPermissionsAsync(Guid userId)
+        public async Task<HashSet<string>?> GetPermissionsAsync(Guid userId, CancellationToken cancellationToken)
         {
-            var cacheKey = getCacheKey(userId);
-            var json = await _cache.GetStringAsync(cacheKey);
+            var cacheKey = GetCacheKey(userId);
+            var json = await _cache.GetStringAsync(cacheKey, cancellationToken);
 
             if (string.IsNullOrEmpty(json)) return null;
 
             return JsonSerializer.Deserialize<HashSet<string>>(json);
         }
 
-        public async Task RevokeUserAsync(Guid userId)
+        public async Task RevokeUserAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            var cacheKey = getCacheKey(userId);
-            await _cache.RemoveAsync(cacheKey);
+            var cacheKey = GetCacheKey(userId);
+            await _cache.RemoveAsync(cacheKey, cancellationToken);
         }
 
-        public async Task ServicePermissionsAsync(Guid userId, HashSet<string> permissions, TimeSpan ttl)
+        public async Task ServicePermissionsAsync(Guid userId, HashSet<string> permissions, TimeSpan ttl, CancellationToken cancellationToken = default)
         {
-            var cacheKey = getCacheKey(userId);
+            var cacheKey = GetCacheKey(userId);
             var json = JsonSerializer.Serialize(permissions);
 
             var options = new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = ttl
             };
-            await _cache.SetStringAsync(cacheKey, json, options);
+            await _cache.SetStringAsync(cacheKey, json, options, cancellationToken);
         }
 
-        private string getCacheKey(Guid userId)
+        private string GetCacheKey(Guid userId)
         {
             return $"{PermissionCacheKeyPrefix}{userId}";
         }
