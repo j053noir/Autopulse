@@ -1,4 +1,5 @@
 ﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Messaging.Events;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Common.Specification;
 using AutoPulse.Domain.Entities;
@@ -26,19 +27,22 @@ namespace AutoPulse.Infrastructure.Payments
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<MockPaymentService> _logger;
         private readonly ResiliencePipeline _resiliencePipeline;
+        private readonly IEventBus _eventBus;
 
         public MockPaymentService
         (
             ICacheService cacheService,
             ILogger<MockPaymentService> logger,
             IServiceProvider serviceProvider,
-            ResiliencePipelineProvider<string> pipelineProvider
+            ResiliencePipelineProvider<string> pipelineProvider,
+            IEventBus eventBus
         )
         {
             _cacheService = cacheService;
             _logger = logger;
             _serviceProvider = serviceProvider;
             _resiliencePipeline = pipelineProvider.GetPipeline(ResilienceConfiguration.GatewayPaymentPolicy);
+            _eventBus = eventBus;
         }
 
         public async Task<PaymentResponse> GetPaymentResponseAsync(PaymentRequest paymentRequest, CancellationToken cancellationToken = default)
@@ -94,12 +98,11 @@ namespace AutoPulse.Infrastructure.Payments
                     var processedReponse = new PaymentResponse
                     (
                         IsSuccess: processedTransaction.IsSuccess.Value,
-                        TransactionReference: processedTransaction.TransactionReference,
+                        TransactionReference: processedTransaction.TransactionReference!,
                         ErrorMessage: processedTransaction.ErrorMessage,
                         ProcessedAt: processedTransaction.ProcessedAt.Value.DateTime
                     );
 
-                    // Cache the processed transaction for future requests
                     await AddTransactionToCacheAsync(paymentRequest, processedReponse, cancellationToken);
 
                     return processedReponse;
@@ -109,7 +112,7 @@ namespace AutoPulse.Infrastructure.Payments
             }
             catch (Exception dbEx)
             {
-                _logger.LogCritical(dbEx, $"Catastrophic failure: Relational database query failed for TransactionId: {paymentRequest.TransactionId}");
+                _logger.LogCritical(dbEx, "Catastrophic failure: Relational database query failed for TransactionId: {TransactionId}", paymentRequest.TransactionId);
                 return null;
             }
         }
@@ -119,9 +122,9 @@ namespace AutoPulse.Infrastructure.Payments
             try
             {
                 var idempotencyKey = GetIdemptoncyKey(paymentRequest);
-
-                await _cacheService.SetAsync(idempotencyKey, paymentResponse, TimeSpan.FromHours(1), cancellationToken);
-
+                
+                await _cacheService.SetAsync(idempotencyKey, paymentResponse, TimeSpan.FromHours(24), cancellationToken); // Ajustado a 24h para resiliencia financiera
+                
                 _logger.LogInformation("Cached payment response for TransactionId: {TransactionId}", paymentRequest.TransactionId);
             }
             catch (Exception ex)
@@ -133,7 +136,6 @@ namespace AutoPulse.Infrastructure.Payments
         public async Task<PaymentResponse> ProcessPaymentAsync(PaymentRequest paymentRequest, CancellationToken cancellationToken = default)
         {
             using var scope = _serviceProvider.CreateScope();
-
             return await this.ProcessPaymentAsync(paymentRequest, scope, cancellationToken);
         }
 
@@ -148,22 +150,21 @@ namespace AutoPulse.Infrastructure.Payments
                 paymentResponse = await _resiliencePipeline.ExecuteAsync(async token =>
                     await SendRequestToPaymentGatewayAsync(paymentRequest, token), cancellationToken);
             }
-            catch(RateLimiterRejectedException rateEx)
+            catch (RateLimiterRejectedException rateEx)
             {
-                _logger.LogWarning(rateEx, $"Concurrency limit reached! Rolling back transaction entry for TransactionId: {paymentRequest.TransactionId} to retry later");
+                _logger.LogWarning(rateEx, "Concurrency limit reached! Rolling back transaction entry for TransactionId: {TransactionId} to retry later", paymentRequest.TransactionId);
 
-                // Rollback
                 var processedTransactionRepository = scope.ServiceProvider.GetRequiredService<IRepository<ProcessedTransaction>>();
                 processedTransactionRepository.Delete(transactionEntity);
 
                 var dbContext = scope.ServiceProvider.GetRequiredService<IAutoPulseDbContext>();
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                throw;
+                throw; // Relanzamos correctamente para que el message broker se entere y reintente
             }
             catch (BrokenCircuitException bcEx)
             {
-                _logger.LogWarning($"Payment Gateway circuit is OPEN. Fast-failing transaction {paymentRequest.TransactionId}. Reason: {bcEx.Message}");
+                _logger.LogWarning("Payment Gateway circuit is OPEN. Fast-failing transaction {TransactionId}. Reason: {Message}", paymentRequest.TransactionId, bcEx.Message);
 
                 paymentResponse = new PaymentResponse(
                     IsSuccess: false,
@@ -174,8 +175,7 @@ namespace AutoPulse.Infrastructure.Payments
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Resilience pipeline intercepted a failure or timeout for TransactionId: {paymentRequest.TransactionId}");
-
+                _logger.LogError(ex, "Resilience pipeline intercepted a failure or timeout for TransactionId: {TransactionId}", paymentRequest.TransactionId);
 
                 paymentResponse = new PaymentResponse(
                     IsSuccess: false,
@@ -196,11 +196,9 @@ namespace AutoPulse.Infrastructure.Payments
 
             try
             {
-                // 1. Save the processed transaction to the database
                 var processedTransactionRepository = scope.ServiceProvider.GetRequiredService<IRepository<ProcessedTransaction>>();
                 processedTransactionRepository.Add(processedTransaction);
 
-                // 2. Save changes to the database
                 var dbContext = scope.ServiceProvider.GetRequiredService<IAutoPulseDbContext>();
                 await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -210,7 +208,6 @@ namespace AutoPulse.Infrastructure.Payments
             }
             catch (Exception ex)
             {
-                // Log the error and rethrow the exception to be handled by the calling method
                 _logger.LogError(ex, "Error occurred while processing payment for TransactionId: {TransactionId}", paymentRequest.TransactionId);
                 throw;
             }
@@ -218,19 +215,15 @@ namespace AutoPulse.Infrastructure.Payments
 
         private async Task<PaymentResponse> SendRequestToPaymentGatewayAsync(PaymentRequest paymentRequest, CancellationToken cancellationToken = default)
         {
-            // Simulate payment processing delay
-            await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken); // Reducido a 2s para desarrollo dinámico
 
-            var isSuccess = paymentRequest.Amount > 0; // Simulate a failure for negative or zero amounts
+            var isSuccess = paymentRequest.Amount > 0;
             var transactionReference = Guid.NewGuid().ToString();
             var errorMessage = isSuccess ? null : "Payment processing failed.";
-            var processedAt = DateTime.UtcNow;
 
-            // Create the payment response
-            var paymentResponse = new PaymentResponse(isSuccess, transactionReference, errorMessage, processedAt);
-
-            return paymentResponse;
+            return new PaymentResponse(isSuccess, transactionReference, errorMessage, DateTime.UtcNow);
         }
+
         private async Task SavePaymentResponse
         (
             PaymentRequest paymentRequest,
@@ -249,7 +242,37 @@ namespace AutoPulse.Infrastructure.Payments
                 var dbContext = scope.ServiceProvider.GetRequiredService<IAutoPulseDbContext>();
                 await dbContext.SaveChangesAsync(cancellationToken);
 
-                // 3. Cache the payment response for future requests
+                // 3. Send Event to Message Bus
+                if (paymentResponse.IsSuccess)
+                {
+                    var succeededEvent = new PaymentSucceededEvent
+                    (
+                        EventId: Guid.NewGuid(),
+                        TransactionId: paymentRequest.TransactionId,
+                        TransactionReference: paymentResponse.TransactionReference,
+                        AmountProcessed: paymentRequest.Amount,
+                        Currency: paymentRequest.Currency,
+                        PaymentMethod: paymentRequest.PaymentMethod,
+                        OccuredOn: paymentResponse.ProcessedAt
+                    );
+
+                    await _eventBus.PublishAsync(succeededEvent, cancellationToken);
+                }
+                else
+                {
+                    var failedEvent = new PaymentFailedEvent
+                    (
+                        EventId: Guid.NewGuid(),
+                        TransactionId: paymentRequest.TransactionId,
+                        ErrorCode: paymentResponse.ErrorMessage == "Insufficient funds." ? "INSUFFICIENT_FUNDS" : "GATEWAY_ERROR",
+                        ErrorMessage: paymentResponse.ErrorMessage ?? "Unknown payment error.",
+                        OccuredOn: DateTime.UtcNow
+                    );
+
+                    await _eventBus.PublishAsync(failedEvent, cancellationToken);
+                }
+
+                // 4. Cache the payment response for future requests
                 await AddTransactionToCacheAsync(paymentRequest, paymentResponse, cancellationToken);
             }
             catch (Exception ex)

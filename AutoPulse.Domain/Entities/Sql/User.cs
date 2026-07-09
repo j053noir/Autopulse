@@ -14,6 +14,8 @@ namespace AutoPulse.Domain.Entities
         private readonly List<Bid> _bids = new();
         public IReadOnlyCollection<Bid> Bids => _bids.AsReadOnly();
 
+        public string PreferredPaymentMethod { get; private set; } = "credit_card";
+
         public User() { }
 
         private User(Guid id, string? userName, string? email, string passwordHash, List<string> permissions)
@@ -45,6 +47,14 @@ namespace AutoPulse.Domain.Entities
         public static User Create(Guid id, string? userName, string? email, bool? isActive, List<string> permissions, DateTimeOffset? createdAt)
         {
             return new User(id, userName, email, isActive ?? false, permissions, createdAt);
+        }
+
+        public void UpdatePreferredPaymentMethod(string preferredPaymentMethod) 
+        {
+            if (string.IsNullOrWhiteSpace(preferredPaymentMethod))
+                throw new ArgumentException("The payment method cannot be empty.");
+            
+            PreferredPaymentMethod = preferredPaymentMethod;
         }
     }
 }

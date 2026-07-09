@@ -13,12 +13,12 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Specificatio
             decimal? maxPrice = null
         ) :
             base(
-                a => a.IsActive.Value && a.EndTime > DateTime.UtcNow &&
+                a => a.IsActive == true && a.EndTime > DateTime.UtcNow &&
                     (auctionId == Guid.Empty || a.Id == auctionId) &&
                     (auctioneerId == Guid.Empty || a.AuctioneerId == auctioneerId) &&
-                    (marquee == null || a.Vehicle.Marquee.ToLower() == marquee.ToLower()) &&
-                    (minYear == null || a.Vehicle.Year >= minYear) &&
-                    (maxPrice == null || a.CurrentPrice.Amount <= maxPrice)
+                    (marquee == null || a.Vehicle!.Marquee == marquee) &&
+                    (minYear == null || a.Vehicle!.Year >= minYear) &&
+                    (maxPrice == null || (a.CurrentPrice != null && a.CurrentPrice.Amount <= maxPrice))
             )
         {
             AddInclude(a => a.Auctioneer);

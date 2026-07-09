@@ -2,13 +2,10 @@
 
 namespace AutoPulse.Application.Application.Common.Events
 {
-    public record AuctionEndedIntegrationEvent(
+    public record AuctionReopenedEvent(
         Guid EventId,
+        Guid TransactionId,
         Guid AuctionId,
-        Guid WinnerId,
-        decimal Amount,
-        string Currency,
-        string PaymentMethod,
         DateTime OccuredOn
     ) : IIntegrationEvent;
 }

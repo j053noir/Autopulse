@@ -69,7 +69,18 @@ namespace AutoPulse.Domain.Entities
                 throw new InvalidOperationException("Auction is already closed");
             IsActive = false;
 
-            WinnerId = _bids.OrderByDescending(b => b.Amount).FirstOrDefault()?.BidderId;
+            if (_bids.Count > 0)
+            {
+                var winnderId = _bids.OrderByDescending(b => b.Amount).FirstOrDefault()?.BidderId;
+                if (winnderId is not null) WinnerId = winnderId;
+            }
+        }
+
+        public void Reopen()
+        {
+            IsActive = true;
+            WinnerId = null;
+            EndTime = DateTime.UtcNow.AddDays(1);
         }
     }
 }

@@ -46,6 +46,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CloseAuction
                 WinnerId: auction.WinnerId.Value,
                 Amount: auction.CurrentPrice.Amount,
                 Currency: auction.CurrentPrice.CurrencyCode,
+                "credit_card",
                 OccuredOn: DateTime.UtcNow
             );
 

@@ -45,7 +45,7 @@ namespace AutoPulse.Application.Application.Auctions.EventHandlers
             }
             catch (Exception ex)
             {
-                _logger.LogError(
+                _logger.LogError(ex, 
                     "Error: Could not send email to winner {WinnerId} for auction {AuctionId}.",
                 notification.WinnerId, notification.AuctionId);
             }
