@@ -12,6 +12,7 @@ using AutoPulse.Infrastructure.Persistence.Sql;
 using AutoPulse.Infrastructure.Persistence.Sql.Queries;
 using AutoPulse.Infrastructure.Persistence.Sql.Repositories;
 using AutoPulse.Infrastructure.Security;
+using AutoPulse.Infrastructure.Services.Telemetry;
 using EntityFramework.Exceptions.PostgreSQL;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
@@ -75,6 +76,8 @@ namespace AutoPulse.Infrastructure
             services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
             services.AddSingleton<IAuthorizationPolicyProvider, DynamicPermissionPolicyProvider>();
             services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+            services.AddSingleton<ITelemetryProcessor, TelemetryProcessor>();
 
             return services;
         }
