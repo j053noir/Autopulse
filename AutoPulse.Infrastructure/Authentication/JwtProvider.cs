@@ -1,4 +1,4 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -31,9 +31,9 @@ namespace AutoPulse.Infrastructure.Authentication
             // 1. Define the claims for the JWT token
             var claims = new List<Claim>
             {
-                new (JwtRegisteredClaimNames.Sub, user?.Id.ToString()),
-                new (JwtRegisteredClaimNames.UniqueName, user?.UserName),
-                new (JwtRegisteredClaimNames.Email, user?.Email),
+                new (JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new (JwtRegisteredClaimNames.UniqueName, user.UserName ?? string.Empty),
+                new (JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
             };
 
             // 2. Retrieve the secret key from configuration

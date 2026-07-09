@@ -1,4 +1,4 @@
-﻿
+
 using AutoPulse.Application.Application.Common.Events;
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
@@ -70,7 +70,7 @@ namespace AutoPulse.Infrastructure.BackgroundJobs
                             // 3. Save changes
                             await dbContext.SaveChangesAsync(stoppingToken);
 
-                            if (expiredAuction.WinnerId.HasValue)
+                            if (expiredAuction.WinnerId.HasValue && expiredAuction.CurrentPrice is not null)
                             {
                                 var integrationEvent = new AuctionEndedIntegrationEvent(
                                     EventId: Guid.NewGuid(),

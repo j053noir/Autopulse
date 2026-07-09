@@ -1,4 +1,4 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Interfaces;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
@@ -14,10 +14,10 @@ namespace AutoPulse.Infrastructure.Authentication
             _cache = cache;
         }
 
-        public async Task<HashSet<string>>? GetPermissionsAsync(Guid userId)
+        public async Task<HashSet<string>?> GetPermissionsAsync(Guid userId)
         {
             var cacheKey = getCacheKey(userId);
-            var json = JsonSerializer.Serialize(cacheKey);
+            var json = await _cache.GetStringAsync(cacheKey);
 
             if (string.IsNullOrEmpty(json)) return null;
 

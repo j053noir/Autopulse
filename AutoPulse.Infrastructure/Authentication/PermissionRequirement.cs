@@ -47,7 +47,7 @@ namespace AutoPulse.Infrastructure.Authentication
                 c.Type == System.Security.Claims.ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdClaim?.Value, out var userId)) return;
 
-            HashSet<string> cachedPermissions = null;
+            HashSet<string>? cachedPermissions = null;
 
             try
             {
@@ -87,11 +87,11 @@ namespace AutoPulse.Infrastructure.Authentication
                     return null;
                 }
 
-                return user?.Permissions.ToHashSet();
+                return user.Permissions.ToHashSet();
             }
             catch (Exception dbEx)
             {
-                _logger.LogCritical(dbEx, "Catastrophic failure: Relational database backup also failed for User: {UserId}");
+                _logger.LogCritical(dbEx, "Catastrophic failure: Relational database backup also failed for User: {UserId}", userId);
                 return null;
             }
         }

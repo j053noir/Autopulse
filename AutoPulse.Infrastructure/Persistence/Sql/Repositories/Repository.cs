@@ -33,7 +33,7 @@ namespace AutoPulse.Infrastructure.Persistence.Sql.Repositories
         {
             var query = ApplySpecification(spec);
 
-            return await query?.FirstOrDefaultAsync(cancellationToken);
+            return await query.FirstOrDefaultAsync(cancellationToken);
         }
 
         public void Update(T entity)
