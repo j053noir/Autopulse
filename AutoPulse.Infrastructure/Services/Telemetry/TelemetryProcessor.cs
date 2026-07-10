@@ -6,11 +6,11 @@ namespace AutoPulse.Infrastructure.Services.Telemetry
 {
     public class TelemetryProcessor : ITelemetryProcessor
     {
-        public void NaiveProcessTelemtry(string csvLine)
+        public TelemetryDataDto? NaiveProcessTelemetry(string csvLine)
         {
             var parts = csvLine.Split(';');
 
-            var telemetryDataDto = new TelemetryDataDto
+            return new TelemetryDataDto
             (
                 parts[0].AsMemory(),
                 double.Parse(parts[1], CultureInfo.InvariantCulture),
@@ -20,29 +20,32 @@ namespace AutoPulse.Infrastructure.Services.Telemetry
             );
         }
 
-        public void SpanProcessTelemetry(string csvLine)
+        public TelemetryDataDto? SpanProcessTelemetry(string csvLine)
         {
             ReadOnlySpan<char> span = csvLine.AsSpan();
             int firstSemi = span.IndexOf(";");
-            if (firstSemi == -1) return;
+            if (firstSemi == -1) return null;
 
             ReadOnlyMemory<char> vehicleMemory = csvLine.AsMemory(0, firstSemi);
 
             ReadOnlySpan<char> remaining = span.Slice(firstSemi + 1);
             int secondSemi = remaining.IndexOf(";");
+            if (secondSemi == -1) return null;
             ReadOnlySpan<char> latSpan = remaining.Slice(0, secondSemi);
 
             remaining = remaining.Slice(secondSemi + 1);
             int thirdSemi = remaining.IndexOf(";");
+            if (thirdSemi == -1) return null;
             ReadOnlySpan<char> lonSpan = remaining.Slice(0, thirdSemi);
 
             remaining = remaining.Slice(thirdSemi + 1);
             int fourthSemi = remaining.IndexOf(";");
+            if (fourthSemi == -1) return null;
             ReadOnlySpan<char> speedSpan = remaining.Slice(0, fourthSemi);
 
             ReadOnlySpan<char> dateSpan = remaining.Slice(fourthSemi + 1);
 
-            var telemetryDataDto = new TelemetryDataDto
+            return new TelemetryDataDto
             (
                 vehicleMemory,
                 double.Parse(latSpan, CultureInfo.InvariantCulture),

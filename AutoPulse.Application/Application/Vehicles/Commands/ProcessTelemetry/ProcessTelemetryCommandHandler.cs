@@ -17,7 +17,7 @@ namespace AutoPulse.Application.Application.Vehicles.Commands.ProcessTelemetry
             if (request.method == ProcessTelemetryMethod.Span)
                 _telemetryProcessor.SpanProcessTelemetry(request.RawData);
             else
-                _telemetryProcessor.NaiveProcessTelemtry(request.RawData);
+                _telemetryProcessor.NaiveProcessTelemetry(request.RawData);
 
             return Task.FromResult(true);
         }

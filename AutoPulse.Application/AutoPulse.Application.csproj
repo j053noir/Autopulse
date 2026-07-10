@@ -16,4 +16,8 @@
     <ProjectReference Include="..\AutoPulse.Domain\AutoPulse.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Application\Authentication\Queries\" />
+  </ItemGroup>
+
 </Project>

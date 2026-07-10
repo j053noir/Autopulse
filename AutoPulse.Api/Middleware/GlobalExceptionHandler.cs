@@ -1,8 +1,10 @@
 using AutoPulse.Domain.Common.Exceptions;
+using AutoPulse.Domain.Exceptions;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Security;
 
 namespace AutoPulse.Api.Middleware
 {
@@ -12,7 +14,7 @@ namespace AutoPulse.Api.Middleware
         private readonly IWebHostEnvironment _environment;
         public GlobalExceptionHandler
         (
-            ILogger<GlobalExceptionHandler> logger, 
+            ILogger<GlobalExceptionHandler> logger,
             IWebHostEnvironment environment
         )
         {
@@ -32,7 +34,7 @@ namespace AutoPulse.Api.Middleware
 
             // 2. Log the internal error for debugging purposes
             _logger.LogError(
-                exception, 
+                exception,
                 "An unhandled exception occurred. [TraceId: {TraceId}] -> {Message}",
                 traceId,
                 exception.Message
@@ -75,20 +77,20 @@ namespace AutoPulse.Api.Middleware
                 DbUpdateException dbEx when dbEx.InnerException?.Message.Contains("violates unique constraint") ?? false =>
                     (StatusCodes.Status409Conflict, "Duplicate Record", "A record with the same unique identifier or key already exists."),
 
-                // 3.d Fallback for unhandled exceptions
+                // 3.d Security Exceptions
+                Exception secEx when secEx is SecurityException || secEx is TokenCompromisedException =>
+                    (StatusCodes.Status403Forbidden, "Access Denied", "The security token provided is invalid or has been compromised."),
+
+                // 3.e Fallback for unhandled exceptions
                 _ =>
                     (StatusCodes.Status500InternalServerError, "Internal Server Error", exception.Message)
             };
 
             // 4. Determine the error message based on the environment (development or production)
-            string detailMessage;
-            if (statusCode == StatusCodes.Status500InternalServerError && !_environment.IsDevelopment())
+            string detailMessage = messageOverride;
+            if (statusCode == StatusCodes.Status500InternalServerError && _environment.IsProduction())
             {
                 detailMessage = "An unexpected error occurred on our server. Please provide the traceId to technical support.";
-            }
-            else
-            {
-                detailMessage = statusCode == StatusCodes.Status500InternalServerError ? exception.Message : messageOverride;
             }
 
             // 5. Build the error response under RFC 7807 (Problem Details for HTTP APIs)

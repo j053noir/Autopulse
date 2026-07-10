@@ -14,5 +14,10 @@
             public const string Read = "users:read";
             public const string Write = "users:update";
         }
+
+        public static class Claims
+        {
+            public const string FamilyId = "family_id";
+        }
     }
 }

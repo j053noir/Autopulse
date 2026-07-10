@@ -1,5 +1,6 @@
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
+using AutoPulse.Domain.Common.Security;
 using AutoPulse.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,12 +48,15 @@ namespace AutoPulse.Infrastructure.Authentication
                 c.Type == System.Security.Claims.ClaimTypes.NameIdentifier);
             if (!Guid.TryParse(userIdClaim?.Value, out var userId)) return;
 
+            var familyIdClaim = context.User.Claims.FirstOrDefault(c => c.Type == Permissions.Claims.FamilyId);
+            if (string.IsNullOrEmpty(familyIdClaim?.Value)) return;
+
             HashSet<string>? cachedPermissions = null;
 
             try
             {
                 // 2. Retrieve the user's permissions from the cache service
-                cachedPermissions = await _cacheService.GetPermissionsAsync(userId);
+                cachedPermissions = await _cacheService.GetPermissionsAsync(userId, familyIdClaim!.Value);
             }
             catch (Exception ex)
             {

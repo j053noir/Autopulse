@@ -27,6 +27,12 @@ namespace AutoPulse.Infrastructure.Persistence.Sql.Configurations
             // 4. Default "credit_card" value for preferred payment method
             builder.Property(u => u.PreferredPaymentMethod)
                     .HasDefaultValue("credit_card");
+
+            // 5. Configure 1:N relationship with Refresh Tokens
+            builder.HasMany(u => u.RefreshTokens)
+                    .WithOne(rt => rt.User)
+                    .HasForeignKey(rt => rt.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
         }
 
     }

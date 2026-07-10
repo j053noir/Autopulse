@@ -55,7 +55,7 @@ namespace AutoPulse.Api.Controllers
             var sw = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                _telemetryProcessor.NaiveProcessTelemtry(rawData);
+                _telemetryProcessor.NaiveProcessTelemetry(rawData);
             }
             sw.Stop();
             double naiveTimeMs = sw.Elapsed.TotalMilliseconds;
