@@ -1,8 +1,10 @@
-﻿namespace AutoPulse.Application.Application.Common.Telemetry.Dto
+using System;
+
+namespace AutoPulse.Application.Application.Common.Telemetry.Dto
 {
-    public record TelemetryDataDto
+    public readonly record struct TelemetryDataDto
     (
-        string VehicleId,
+        ReadOnlyMemory<char> VehicleId,
         double Latitude,
         double Longitude,
         double Speed,
