@@ -19,5 +19,17 @@
         {
             public const string FamilyId = "family_id";
         }
+
+        public static class CacheKeys
+        {
+            public const string RateLimitAuth = "ratelimit:auth";
+            public const string RateLimitGeneral = "ratelimit:general";
+        }
+
+        public static class Policies
+        {
+            public const string AuthPolicy = "auth-policy";
+            public const string ApiGeneralPolicy = "api-general-policy";
+        }
     }
 }

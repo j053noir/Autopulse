@@ -3,6 +3,7 @@ using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Common.Behaviors;
 using AutoPulse.Infrastructure;
 using AutoPulse.Infrastructure.Resilience;
+using AutoPulse.Infrastructure.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,6 +46,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddDistributedRateLimiter(builder.Configuration);
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddMediatR(cfg =>
@@ -71,6 +74,7 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
