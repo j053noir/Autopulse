@@ -1,4 +1,5 @@
 ﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Security;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities;
 using AutoPulse.Domain.ValueObjects;
@@ -27,7 +28,13 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
         {
             // 1. Create vehicle entity using its factory methods
             var vehicleId = Guid.NewGuid();
-            var vehicle = Vehicle.Create(vehicleId, request.Vin, request.Marquee, request.Model, request.Year, request.Mileage);
+
+            // 1.1 Sanitize string inputs
+            var sanitizedVin = request.Vin.SanitizeInput();
+            var sanitizedMarquee = request.Marquee.SanitizeInput();
+            var sanitizeModel = request.Model.SanitizeInput();
+
+            var vehicle = Vehicle.Create(vehicleId, sanitizedVin, sanitizedMarquee, sanitizeModel, request.Year, request.Mileage);
 
             // 2. Create auction entity using its factory methods
             var auctionId = Guid.NewGuid();

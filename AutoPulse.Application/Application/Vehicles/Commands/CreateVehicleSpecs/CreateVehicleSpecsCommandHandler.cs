@@ -1,11 +1,9 @@
 using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Security;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities;
 using AutoPulse.Domain.Entities.NoSql;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AutoPulse.Application.Application.Vehicles.Commands.CreateVehicleSpecs
 {
@@ -16,7 +14,7 @@ namespace AutoPulse.Application.Application.Vehicles.Commands.CreateVehicleSpecs
         private readonly ICacheService _cacheService;
 
         public CreateVehicleSpecsCommandHandler(
-            INoSqlRepository<VehicleSpecificationDocument> repository, 
+            INoSqlRepository<VehicleSpecificationDocument> repository,
             IRepository<Auction> auctionRepository,
             ICacheService cacheService)
         {
@@ -35,11 +33,16 @@ namespace AutoPulse.Application.Application.Vehicles.Commands.CreateVehicleSpecs
             var doc = await _vehicleRepository.GetByIdAsync(request.AuctionId, cancellationToken);
             if (doc is not null) throw new InvalidOperationException($"There's already a document created for auction {request.AuctionId}");
 
+            var sanitizedSpecs = request.KeyValuePairs.ToDictionary(
+                kvp => kvp.Key.SanitizeInput() ?? throw new ArgumentException($"Invalid specs key {kvp.Key}"),
+                kvp => (kvp.Value is string stringValue ? stringValue.SanitizeInput() : kvp.Value) ?? throw new ArgumentException($"Invalid specs value {kvp.Value}")
+            );
+
             doc = VehicleSpecificationDocument.Create(
                 request.AuctionId,
-                auction.Vehicle.Marquee,
-                auction.Vehicle.Model,
-                request.KeyValuePairs.ToDictionary()
+                auction.Vehicle!.Marquee!,
+                auction.Vehicle!.Model!,
+                sanitizedSpecs
                 );
 
             var resultId = await _vehicleRepository.AddAsync(doc, cancellationToken);

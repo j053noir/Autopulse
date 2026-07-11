@@ -1,5 +1,6 @@
 using AutoPulse.Application.Application.Authentication.Common.Specification;
 using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Security;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Common.Security;
 using AutoPulse.Domain.Entities;
@@ -40,7 +41,9 @@ namespace AutoPulse.Application.Application.Authentication.Commands.RegisterUser
 
             // 2. Create user entity using its factory methods
             var permissions = CustomerPermissions();
-            var user = User.Create(userId, request.Username, request.Email, passwordHash, permissions);
+            var sanitizedUsername = request.Username.SanitizeInput();
+
+            var user = User.Create(userId, sanitizedUsername, request.Email, passwordHash, permissions);
 
             // 3. Add the user entity to the repository
             _userRepository.Add(user);

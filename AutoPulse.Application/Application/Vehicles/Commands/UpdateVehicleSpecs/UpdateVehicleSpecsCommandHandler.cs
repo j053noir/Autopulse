@@ -1,4 +1,5 @@
 using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Security;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities.NoSql;
 using MediatR;
@@ -23,7 +24,11 @@ namespace AutoPulse.Application.Application.Vehicles.Commands.UpdateVehicleSpecs
             var doc = await _vehicleRepository.GetByIdAsync(request.AuctionId, cancellationToken);
             if (doc is null) return false;
 
-            doc.UpdateMetadata(request.Key, request.Value);
+            var sanitizedValue = request.Value is string stringValue
+                ? stringValue.SanitizeInput()
+                : request.Value;
+
+            doc.UpdateMetadata(request.Key, sanitizedValue);
 
             await _vehicleRepository.UpdateAsync(request.AuctionId, doc, cancellationToken);
 
