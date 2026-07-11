@@ -1,0 +1,40 @@
+services:
+  postgres-master:
+    image: postgres:16-alpine
+    container_name: autopulse-postgres-master
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=autopulse
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=autopulse
+    volumes:
+      - postgres_master_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autopulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres-slave:
+    image: postgres:16-alpine
+    container_name: autopulse-postgres-slave
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=autopulse
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=autopulse-slave
+    volumes:
+      - postgres_slave_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U autopulse -d autopulse-slave"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres_master_data:
+  postgres_slave_data:

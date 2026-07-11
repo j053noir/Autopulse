@@ -1,0 +1,76 @@
+# Development/Seed Docker Compose environment for AutoPulse
+# This file extends docker-compose.infrastructure.yml and automatically runs database seeding scripts.
+# Run with: docker compose up
+
+include:
+  - path: docker-compose.db.yml
+  - path: docker-compose.cache.yml
+  - path: docker-compose.mongodb.yml
+  - path: docker-compose.messaging.yml
+
+services:
+  db-migrations:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: autopulse-db-migrations
+    profiles:
+      - seed
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__CacheConnection=valkey:6379
+      - ConnectionStrings__MasterDatabaseConnection=Host=postgres-master;Database=autopulse;Port=5432;Username=autopulse;Password=mysecretpassword
+      - ConnectionStrings__SlaveDatabaseConnection=Host=postgres-slave;Database=autopulse-slave;Port=5432;Username=autopulse;Password=mysecretpassword
+    volumes:
+      - .:/app
+      - ./docker/postgres/run-migrations.sh:/run-migrations.sh
+    working_dir: /app
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+      postgres-slave:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+    entrypoint: bash /run-migrations.sh
+
+  postgres-seed:
+    image: postgres:16-alpine
+    container_name: autopulse-postgres-seed
+    profiles:
+      - seed
+    environment:
+      - PGPASSWORD=mysecretpassword
+    volumes:
+      - ./docker/postgres/seed.sql:/seed.sql
+    depends_on:
+      db-migrations:
+        condition: service_completed_successfully
+    entrypoint: |
+      sh -c "
+      set -e
+      echo 'Seeding Master database...'
+      psql -h postgres-master -U autopulse -d autopulse -f /seed.sql
+
+      echo 'Seeding Slave database...'
+      psql -h postgres-slave -U autopulse -d autopulse-slave -f /seed.sql
+
+      echo 'PostgreSQL seeding completed successfully!'
+      "
+
+  mongodb-seed:
+    image: mongo:7.0
+    container_name: autopulse-mongodb-seed
+    profiles:
+      - seed
+    volumes:
+      - ./docker/mongodb/seed-mongo.js:/seed-mongo.js
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    entrypoint: |
+      sh -c "
+      set -e
+      echo 'Waiting for MongoDB to be ready...'
+      sleep 2
+      echo 'Seeding MongoDB database...'
+      mongosh \"mongodb://mongodb:27017/autopulse\" /seed-mongo.js
+      "
