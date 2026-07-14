@@ -3,6 +3,6 @@
     public interface IPushProvider
     {
         string ProviderName { get; }
-        Task SendAsync(string to, string message, CancellationToken cancellationToken);
+        Task SendAsync(string deviceToken, string title, string body, CancellationToken cancellationToken);
     }
 }

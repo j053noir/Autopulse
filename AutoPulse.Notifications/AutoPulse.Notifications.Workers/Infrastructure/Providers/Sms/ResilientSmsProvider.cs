@@ -2,11 +2,11 @@
 using Polly;
 using Polly.Wrap;
 
-namespace AutoPulse.Notifications.Workers.Infrastructure.Providers
+namespace AutoPulse.Notifications.Workers.Infrastructure.Providers.Sms
 {
     public class ResilientSmsProvider : ISmsProvider
     {
-        public string ProviderName => nameof(ResilientSmsProvider);
+        public string ProviderName => "ResilientSmsGateway";
 
         private readonly ISmsProvider _primaryProvider;
         private readonly ISmsProvider _fallbackProvider;
@@ -66,9 +66,11 @@ namespace AutoPulse.Notifications.Workers.Infrastructure.Providers
 
         public async Task SendSmsAsync(string to, string message, CancellationToken cancellationToken)
         {
-            var context = new Context();
-            context[ContextKeys.To] = to;
-            context[ContextKeys.Message] = message;
+            var context = new Context
+            {
+                [ContextKeys.To] = to,
+                [ContextKeys.Message] = message
+            };
 
             await _resiliencePolicy.ExecuteAsync
             (
@@ -79,13 +81,13 @@ namespace AutoPulse.Notifications.Workers.Infrastructure.Providers
         }
     }
 
-    public static class ContextKeys
+    internal static class ContextKeys
     {
         public const string To = "to";
         public const string Message = "message";
     }
 
-    public static class ContextExtensions
+    internal static class ContextExtensions
     {
         public static object GetContextData(Context context, string key)
         {

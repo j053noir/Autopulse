@@ -11,16 +11,20 @@ namespace AutoPulse.Notifications.Workers.Services
     {
         private readonly ILogger<NotificationDispatcher> _logger;
         private readonly ISmsProvider _smsProvider;
-        // private readonly IEmailProvider _emailProvider;
-        // private readonly IPushProvider _pushProvider;
+        private readonly IEmailProvider _emailProvider;
+        private readonly IPushProvider _pushProvider;
 
         public NotificationDispatcher
         (
             ILogger<NotificationDispatcher> logger,
-            ISmsProvider smsProvider
+            ISmsProvider smsProvider,
+            IEmailProvider emailProvider,
+            IPushProvider pushProvider
         )
         {
             _smsProvider = smsProvider;
+            _emailProvider = emailProvider;
+            _pushProvider = pushProvider;
             _logger = logger;
         }
 
@@ -28,6 +32,7 @@ namespace AutoPulse.Notifications.Workers.Services
         {
             _logger.LogInformation($"Processing channel {notificationPayload.Channel} for user {notificationPayload.UserId}");
 
+            var renderedTitle = GetTitle(notificationPayload.TemplateId, notificationPayload.TemplateVariables);
             var renderedMessage = RenderTemplate(notificationPayload.TemplateId, notificationPayload.TemplateVariables);
 
             switch (notificationPayload.Channel.ToLowerInvariant())
@@ -37,19 +42,40 @@ namespace AutoPulse.Notifications.Workers.Services
                     break;
 
                 case "email":
-                    // await _emailProvider.SendEmailAsync(notificationPayload.Target, renderedMessage, cancellationToken);
-                    _logger.LogWarning("Email provider not implemented yet");
+                    await _emailProvider.SendEmailAsync(notificationPayload.Target, renderedTitle, renderedMessage, cancellationToken);
                     break;
 
                 case "push":
-                    // await _pushProvider.SendAsync(notificationPayload.Target, renderedMessage, cancellationToken);
-                    _logger.LogWarning("Push provider not implemented yet");
+                    await _pushProvider.SendAsync(notificationPayload.Target, renderedTitle, renderedMessage, cancellationToken);
                     break;
 
                 default:
                     _logger.LogWarning($"Channel {notificationPayload.Channel} not supported");
                     break;
             }
+        }
+
+        private static string GetTitle(string templateId, Dictionary<string, string> templateVariables)
+        {
+            string rawTitle= templateId switch
+            {
+                "status" => "Auction \"{Auction} \" is {Status}.",
+                "auction_won" => "Auction \"{Auction} \" ended, congratulations you won!.",
+                "auction_lose" => "Auction \"{Auction} \" ended, sorry somebody else won.",
+                "outbid" => "Hurry up! some outbid you in the auction \"{Auction} \".",
+                "payment_received" => "Payment received for auction \"{Auction} \".",
+                "payment_rejected" => "Payment rejected for auction \"{Auction} \".",
+                "marketing" => "Autopulse this week offers",
+                "newsletter" => "Autopulse this week news",
+                _ => throw new ArgumentException($"templateId {templateId} is not a valid template"),
+            };
+
+            foreach (var (key, value) in templateVariables)
+            {
+                rawTitle = rawTitle.Replace("{" + key + "}", value);
+            }
+
+            return rawTitle;
         }
 
         private static string RenderTemplate(string templateId, Dictionary<string, string> templateVariables)
