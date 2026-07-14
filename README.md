@@ -46,3 +46,31 @@ Puedes levantar únicamente los módulos que requieras para tu sesión de desarr
 | **Valkey** | `autopulse-valkey` | `6379` | Caché distribuido y Rate Limiting |
 | **MongoDB** | `autopulse-mongodb` | `27017` | Almacenamiento NoSQL (Especificaciones) |
 | **Apache Kafka** | `autopulse-kafka` | `9092` | Broker de mensajería (KRaft mode) |
+
+---
+
+## Creación de Tópicos en Apache Kafka (Docker)
+
+Para crear manualmente los tópicos de notificación en el contenedor de Kafka, ejecuta el siguiente comando en la terminal utilizando `docker exec` apuntando al contenedor `autopulse-kafka`:
+
+```bash
+# Crear un tópico específico
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic <nombre-del-topico>
+```
+
+### Tópicos del Sistema de Notificaciones
+Puedes crear los siguientes tópicos requeridos para el servicio:
+
+```bash
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.telemetry.events
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.transactional.email
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.transactional.sms
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.transactional.push
+docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.marketing.bulk
+```
+
+### Listar Tópicos Existentes
+Para verificar que los tópicos se hayan creado correctamente:
+```bash
+docker exec -it autopulse-kafka kafka-topics --list --bootstrap-server localhost:9092
+```
