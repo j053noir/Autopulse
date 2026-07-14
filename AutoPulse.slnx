@@ -1,4 +1,9 @@
 <Solution>
+  <Folder Name="/AutoPulse.Notifications/">
+    <Project Path="AutoPulse.Notifications/AutoPulse.Notifications.Ingestion/AutoPulse.Notifications.Ingestion.csproj" Id="11e2dac0-6bb2-4b9f-8d3c-622f3910aa56" />
+    <Project Path="AutoPulse.Notifications/AutoPulse.Notifications.Shared/AutoPulse.Notifications.Shared.csproj" Id="4e9f27b1-6276-415c-ac04-ea40f71d1077" />
+    <Project Path="AutoPulse.Notifications/AutoPulse.Notifications.Workers/AutoPulse.Notifications.Workers.csproj" Id="69ae502b-fd97-4226-98a4-2319db87f834" />
+  </Folder>
   <Project Path="AutoPulse.Api/AutoPulse.Api.csproj" />
   <Project Path="AutoPulse.Application/AutoPulse.Application.csproj" />
   <Project Path="AutoPulse.Domain/AutoPulse.Domain.csproj" />
