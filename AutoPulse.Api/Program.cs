@@ -85,6 +85,8 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseCors("CorsPolicy");
+
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
