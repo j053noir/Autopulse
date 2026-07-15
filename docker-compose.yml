@@ -9,6 +9,29 @@ include:
   - path: docker-compose.messaging.yml
 
 services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: autopulse-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__CacheConnection=valkey:6379
+      - ConnectionStrings__MasterDatabaseConnection=Host=postgres-master;Database=autopulse;Port=5432;Username=autopulse;Password=mysecretpassword
+      - ConnectionStrings__SlaveDatabaseConnection=Host=postgres-slave;Database=autopulse-slave;Port=5432;Username=autopulse;Password=mysecretpassword
+      - ConnectionStrings__MongoConnection=mongodb://mongodb:27017
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+      postgres-slave:
+        condition: service_healthy
+      valkey:
+        condition: service_started
+      mongodb:
+        condition: service_healthy
+
   db-migrations:
     image: mcr.microsoft.com/dotnet/sdk:10.0
     container_name: autopulse-db-migrations

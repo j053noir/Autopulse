@@ -11,7 +11,7 @@ El proyecto está diseñado bajo un enfoque modular, separando los servicios de 
 ### Formas de Ejecutar la Infraestructura
 
 #### 1. Iniciar Todo el Entorno (Por Defecto)
-Inicia PostgreSQL (Master/Slave), Valkey, MongoDB y Apache Kafka (KRaft):
+Inicia la API del Backend (.NET Core), PostgreSQL (Master/Slave), Valkey, MongoDB y Apache Kafka (KRaft):
 ```bash
 docker compose up -d
 ```
@@ -41,6 +41,7 @@ Puedes levantar únicamente los módulos que requieras para tu sesión de desarr
 
 | Servicio | Contenedor | Puerto Local | Detalle |
 | :--- | :--- | :--- | :--- |
+| **API Backend** | `autopulse-api` | `5000` | API Principal del Backend (.NET Core) |
 | **PostgreSQL (Master)** | `autopulse-postgres-master` | `5432` | Base de datos relacional (Escritura) |
 | **PostgreSQL (Slave)** | `autopulse-postgres-slave` | `5433` | Base de datos relacional (Lectura) |
 | **Valkey** | `autopulse-valkey` | `6379` | Caché distribuido y Rate Limiting |
