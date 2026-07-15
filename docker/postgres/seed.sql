@@ -10,15 +10,15 @@ TRUNCATE TABLE "UserRefreshToken" CASCADE;
 TRUNCATE TABLE "Users" CASCADE;
 
 -- 1. Seed Users (with BCrypt.Net.BCrypt.EnhancedHashPassword hash of "Password123!")
--- Hash: $2a$12$R9h/lS39dD1c9yT01nL6UuP0q1p0.gq4tqP8Qz5S0qV6oK3E1aCj. (using standard BCrypt format)
+-- Hash: $2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C
 INSERT INTO "Users" (
     "Id", "UserName", "Email", "IsActive", "PasswordHash", "Permissions", "PreferredPaymentMethod", "CreatedAt", "UpdatedAt", "DeletedAt"
 ) VALUES
-('019056d0-2a81-7000-8b1e-50e50f3c5bca', 'john_auctioneer', 'john@autopulse.com', true, '$2a$12$jN47Lp9l9mP.kF5yHn.eUeS3Ym1d6X.w.xXv9W6F2p5P9kO5qV6fK', ARRAY['Auctions.Create', 'Auctions.Close', 'Auctions.Read'], 'bank_transfer', NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bcb', 'mary_auctioneer', 'mary@autopulse.com', true, '$2a$12$jN47Lp9l9mP.kF5yHn.eUeS3Ym1d6X.w.xXv9W6F2p5P9kO5qV6fK', ARRAY['Auctions.Create', 'Auctions.Close', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bcc', 'alex_bidder', 'alex@gmail.com', true, '$2a$12$jN47Lp9l9mP.kF5yHn.eUeS3Ym1d6X.w.xXv9W6F2p5P9kO5qV6fK', ARRAY['Bids.Place', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bcd', 'lucas_bidder', 'lucas@yahoo.com', true, '$2a$12$jN47Lp9l9mP.kF5yHn.eUeS3Ym1d6X.w.xXv9W6F2p5P9kO5qV6fK', ARRAY['Bids.Place', 'Auctions.Read'], 'paypal', NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bce', 'sophia_bidder', 'sophia@outlook.com', true, '$2a$12$jN47Lp9l9mP.kF5yHn.eUeS3Ym1d6X.w.xXv9W6F2p5P9kO5qV6fK', ARRAY['Bids.Place', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL);
+('019056d0-2a81-7000-8b1e-50e50f3c5bca', 'john_auctioneer', 'john@autopulse.com', true, '$2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C', ARRAY['Auctions.Create', 'Auctions.Close', 'Auctions.Read'], 'bank_transfer', NOW(), NULL, NULL),
+('019056d0-2a81-7000-8b1e-50e50f3c5bcb', 'mary_auctioneer', 'mary@autopulse.com', true, '$2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C', ARRAY['Auctions.Create', 'Auctions.Close', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL),
+('019056d0-2a81-7000-8b1e-50e50f3c5bcc', 'alex_bidder', 'alex@gmail.com', true, '$2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C', ARRAY['Bids.Place', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL),
+('019056d0-2a81-7000-8b1e-50e50f3c5bcd', 'lucas_bidder', 'lucas@yahoo.com', true, '$2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C', ARRAY['Bids.Place', 'Auctions.Read'], 'paypal', NOW(), NULL, NULL),
+('019056d0-2a81-7000-8b1e-50e50f3c5bce', 'sophia_bidder', 'sophia@outlook.com', true, '$2a$12$hbwcAGrntcUZZWHoueaJ0OS48JQd2hvFvarfpMYa/87PxJVs51X9C', ARRAY['Bids.Place', 'Auctions.Read'], 'credit_card', NOW(), NULL, NULL);
 
 -- 2. Seed Vehicles (17-char VINs)
 INSERT INTO "Vehicles" (
