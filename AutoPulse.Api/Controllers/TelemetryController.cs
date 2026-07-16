@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Application.Application.Vehicles.Commands.ProcessTelemetry;
+using AutoPulse.Domain.Common.Security;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPulse.Api.Controllers
@@ -27,6 +29,7 @@ namespace AutoPulse.Api.Controllers
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns></returns>
         [HttpPost]
+        [Authorize(Policy = Permissions.Telemetry.Process)]
         public async Task<IActionResult> ProcessTelemetry
         (
             [FromQuery] string method,
@@ -41,6 +44,7 @@ namespace AutoPulse.Api.Controllers
         }
 
         [HttpPost("benchmark")]
+        [Authorize(Policy = Permissions.Telemetry.Benchmark)]
         public IActionResult Benchmark([FromBody] string rawData)
         {
             const int iterations = 500_000;

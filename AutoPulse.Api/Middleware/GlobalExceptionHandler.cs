@@ -56,7 +56,7 @@ namespace AutoPulse.Api.Middleware
                     (StatusCodes.Status400BadRequest, "Bad Request", "A required argument was null."),
 
                 ArgumentException or InvalidOperationException =>
-                    (StatusCodes.Status400BadRequest, "Bad Request", "An invalid argument was provided."),
+                    (StatusCodes.Status400BadRequest, "Bad Request", exception.Message ?? "An invalid argument was provided."),
 
                 KeyNotFoundException =>
                     (StatusCodes.Status404NotFound, "Not Found", "The requested resource was not found."),

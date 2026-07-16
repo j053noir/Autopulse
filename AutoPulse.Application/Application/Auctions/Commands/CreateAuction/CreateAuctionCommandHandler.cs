@@ -14,7 +14,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
         private readonly ICacheService _cacheService;
 
         public CreateAuctionCommandHandler(
-            IRepository<Auction> auctionRepository, 
+            IRepository<Auction> auctionRepository,
             IAutoPulseDbContext context,
             ICacheService cacheService
         )
@@ -38,7 +38,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
 
             // 2. Create auction entity using its factory methods
             var auctionId = Guid.NewGuid();
-            var auction = Auction.Create(auctionId, request.AuctioneerId, vehicle, Money.CreateCAD(request.StartingPrice), request.EndTime);
+            var auction = Auction.Create(auctionId, request.AuctioneerId, vehicle, Money.Create(request.StartingPrice, request.Currency), request.EndTime);
 
             // 3. Add the auction entity to the repository
             _auctionRepository.Add(auction);

@@ -28,11 +28,11 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
         public async Task<Guid> Handle(CreateAuctionBidCommand request, CancellationToken cancellationToken)
         {
             // 1. Retrieve auction, or throw if not found
-            var auction = await _auctionRepository.GetByIdAsync(request.AuctionId) 
+            var auction = await _auctionRepository.GetByIdAsync(request.AuctionId)
                 ?? throw new KeyNotFoundException($"Auction with id: {request.AuctionId} was not found");
 
             // 2. Create the inmutable value object for the amount
-            var bidAmount = Money.CreateCAD(request.Amount);
+            var bidAmount = Money.Create(request.Amount, request.Currency);
 
             // 3. Create bid through parent auction
             var bid = auction.PlaceBid(request.AuctioneerId, bidAmount);
@@ -50,7 +50,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
             {
                 // 7. Handle the conflict gracefully
                 throw new Exception("The auction was updated by another user while you were placing your bid. Please try again.");
-            }            
+            }
 
             // 8. Return the new resource Id
             return bid.Id;
