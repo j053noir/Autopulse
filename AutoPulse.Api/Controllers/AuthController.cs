@@ -2,14 +2,16 @@ using AutoPulse.Application.Application.Authentication.Commands.LoginUser;
 using AutoPulse.Application.Application.Authentication.Commands.RegisterUser;
 using AutoPulse.Application.Application.Authentication.Commands.RefreshToken;
 using AutoPulse.Application.Application.Authentication.Commands.LogoutUser;
+using AutoPulse.Application.Application.Authentication.Queries.GetCurrentUserProfile;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPulse.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : Controller
+    public class AuthController : BaseController
     {
         private readonly IMediator _mediator;
 
@@ -84,6 +86,27 @@ namespace AutoPulse.Api.Controllers
             }
 
             return Ok(new { Message = "Logged out successfully" });
+        }
+
+        /// <summary>
+        /// Retrieves the current authenticated user's profile and active permissions.
+        /// </summary>
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile(CancellationToken cancellationToken)
+        {
+            var userId = GetUserClaimId("UserId");
+            var familyId = User.Claims.FirstOrDefault(c => c.Type == "family_id")?.Value ?? string.Empty;
+
+            var query = new GetCurrentUserProfileQuery(userId, familyId);
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
         }
     }
 }
