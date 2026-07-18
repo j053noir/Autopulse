@@ -21,7 +21,7 @@ namespace AutoPulse.Api.Controllers
         }
 
         /// <summary>
-        /// Authenticates a user and returns access and refresh tokens.
+        /// Authenticates a user and returns access and refresh tokens (and sets secure HTTP-Only cookies).
         /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginUserCommand query, CancellationToken cancellationToken = default)
@@ -35,6 +35,19 @@ namespace AutoPulse.Api.Controllers
                     Message = $"Credentials not found"
                 });
             }
+
+            // Configuración dinámica de cookies para soportar HTTP local y HTTPS en producción
+            var isHttps = Request.IsHttps;
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isHttps,
+                SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(result.ExpiresIn > 0 ? result.ExpiresIn : 60)
+            };
+
+            Response.Cookies.Append("autopulse-session", result.AccessToken, cookieOptions);
+            Response.Cookies.Append("autopulse-refresh-token", result.RefreshToken, cookieOptions);
 
             return Ok(result);
         }
@@ -54,9 +67,19 @@ namespace AutoPulse.Api.Controllers
         /// Rotates the refresh token and returns a new pair of access and refresh tokens.
         /// </summary>
         [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand? command, CancellationToken cancellationToken = default)
         {
-            var result = await _mediator.Send(command, cancellationToken);
+            // Intentar leer desde las cookies HTTP-only, o caer en el body para compatibilidad heredada
+            var accessToken = Request.Cookies["autopulse-session"] ?? command?.AccessToken;
+            var refreshToken = Request.Cookies["autopulse-refresh-token"] ?? command?.RefreshToken;
+
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
+            {
+                return BadRequest(new { Message = "Access or Refresh token is missing" });
+            }
+
+            var resolvedCommand = new RefreshTokenCommand(accessToken, refreshToken);
+            var result = await _mediator.Send(resolvedCommand, cancellationToken);
 
             if (result is null)
             {
@@ -66,6 +89,19 @@ namespace AutoPulse.Api.Controllers
                 });
             }
 
+            // Actualizar las cookies seguras HTTP-Only con el nuevo par de tokens
+            var isHttps = Request.IsHttps;
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isHttps,
+                SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(result.ExpiresIn > 0 ? result.ExpiresIn : 60)
+            };
+
+            Response.Cookies.Append("autopulse-session", result.AccessToken, cookieOptions);
+            Response.Cookies.Append("autopulse-refresh-token", result.RefreshToken, cookieOptions);
+
             return Ok(result);
         }
 
@@ -73,15 +109,40 @@ namespace AutoPulse.Api.Controllers
         /// Logs out the user and revokes the active session.
         /// </summary>
         [HttpPost("logout")]
-        public async Task<IActionResult> Logout([FromBody] LogoutUserCommand command, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Logout([FromBody] LogoutUserCommand? command, CancellationToken cancellationToken = default)
         {
-            var result = await _mediator.Send(command, cancellationToken);
+            // Leer de cookies o caer en el body
+            var accessToken = Request.Cookies["autopulse-session"] ?? command?.AccessToken;
+            var refreshToken = Request.Cookies["autopulse-refresh-token"] ?? command?.RefreshToken;
+
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
+            {
+                // Si no hay cookies ni datos en el body, borramos las cookies de todas formas y respondemos ok
+                Response.Cookies.Delete("autopulse-session");
+                Response.Cookies.Delete("autopulse-refresh-token");
+                return Ok(new { Message = "Logged out successfully (session was already cleared)" });
+            }
+
+            var resolvedCommand = new LogoutUserCommand(accessToken, refreshToken);
+            var result = await _mediator.Send(resolvedCommand, cancellationToken);
+
+            // Eliminar cookies del navegador del cliente
+            var isHttps = Request.IsHttps;
+            var deleteOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isHttps,
+                SameSite = isHttps ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddDays(-1)
+            };
+            Response.Cookies.Delete("autopulse-session", deleteOptions);
+            Response.Cookies.Delete("autopulse-refresh-token", deleteOptions);
 
             if (!result)
             {
                 return BadRequest(new
                 {
-                    Message = "Unable to process logout request"
+                    Message = "Unable to process logout request in DB"
                 });
             }
 
