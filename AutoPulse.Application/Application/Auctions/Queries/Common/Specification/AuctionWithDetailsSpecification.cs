@@ -1,5 +1,6 @@
 using AutoPulse.Domain.Common.Specification;
 using AutoPulse.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AutoPulse.Application.Application.Auctions.Queries.Common.Specification
 {
@@ -10,7 +11,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Specificatio
         {
             AddInclude(a => a.Auctioneer);
             AddInclude(a => a.Vehicle);
-            AddInclude(a => a.Bids);
+            AddInclude(q => q.Include(a => a.Bids).ThenInclude(b => b.Bidder!));
         }
     }
 }

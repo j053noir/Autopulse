@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace AutoPulse.Domain.Common.Specification
 {
@@ -6,6 +6,7 @@ namespace AutoPulse.Domain.Common.Specification
     {
         Expression<Func<T, bool>>? Criteria { get; }
         List<Expression<Func<T, object>>> Includes { get; }
+        List<Func<IQueryable<T>, IQueryable<T>>> IncludeChains { get; }
         Expression<Func<T, object>>? OrderBy { get; }
         Expression<Func<T, object>>? OrderByDescending { get; }
     }

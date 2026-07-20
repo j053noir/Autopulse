@@ -14,6 +14,9 @@ namespace AutoPulse.Infrastructure.Persistence.Sql.Repositories
             // Apply includes
             query = specification.Includes.Aggregate(query, (current, include) => current.Include(include));
 
+            // Apply chained includes
+            query = specification.IncludeChains.Aggregate(query, (current, includeChain) => includeChain(current));
+
             if (specification.OrderBy != null) query = query.OrderBy(specification.OrderBy);
             else if (specification.OrderByDescending != null) query = query.OrderByDescending(specification.OrderByDescending);
             

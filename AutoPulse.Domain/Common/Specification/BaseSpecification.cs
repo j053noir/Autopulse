@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 
 namespace AutoPulse.Domain.Common.Specification
 {
@@ -11,12 +11,18 @@ namespace AutoPulse.Domain.Common.Specification
 
         public Expression<Func<T, bool>>? Criteria { get; protected set; }
         public List<Expression<Func<T, object>>> Includes { get; } = new();
+        public List<Func<IQueryable<T>, IQueryable<T>>> IncludeChains { get; } = new();
         public Expression<Func<T, object>>? OrderBy { get; protected set; }
         public Expression<Func<T, object>>? OrderByDescending { get; protected set; }
 
         protected void AddInclude(Expression<Func<T, object>> includeExpression)
         {
             Includes.Add(includeExpression);
+        }
+
+        protected void AddInclude(Func<IQueryable<T>, IQueryable<T>> includeChain)
+        {
+            IncludeChains.Add(includeChain);
         }
 
         protected void ApplyOrderBy(Expression<Func<T, object>> orderByExpression) => OrderBy = orderByExpression;

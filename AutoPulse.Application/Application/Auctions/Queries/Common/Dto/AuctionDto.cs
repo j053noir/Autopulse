@@ -1,4 +1,4 @@
-﻿namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
+namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
 {
     /// <summary>
     /// Represents a data transfer object (DTO) for an auction
@@ -69,6 +69,7 @@
     public record BidDto(
         Guid? Id,
         Guid? BidderId,
+        string? BidderName,
         decimal? Amount,
         string? Currency,
         DateTime? CreatedAt

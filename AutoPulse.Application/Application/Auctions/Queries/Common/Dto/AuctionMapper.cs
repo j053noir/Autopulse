@@ -1,4 +1,4 @@
-﻿using AutoPulse.Domain.Entities;
+using AutoPulse.Domain.Entities;
 
 namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
 {
@@ -47,6 +47,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
             var bidDtos = auction.Bids?.Select(bid => new BidDto(
                 bid.Id,
                 bid.BidderId,
+                bid.Bidder?.UserName,
                 bid.Amount?.Amount,
                 bid.Amount?.CurrencyCode,
                 bid.CreatedAt.DateTime
