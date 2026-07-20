@@ -3,6 +3,7 @@ using AutoPulse.Application.Application.Auctions.Queries.Common.Specification;
 using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities;
+using AutoPulse.Application.Application.Common.Constants;
 using MediatR;
 using System.Collections.Concurrent;
 
@@ -25,7 +26,7 @@ namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
         public async Task<AuctionDto?> Handle(GetAuctionByIdQuery request, CancellationToken cancellationToken)
         {
             // 1. Check if the auction is already cached
-            var cacheKey = GetCacheKey(request.Id);
+            var cacheKey = CacheKeys.AuctionDetail(request.Id);
             var cachedAuction = await _cacheService.GetAsync<AuctionDto>(cacheKey, cancellationToken);
 
             if (cachedAuction is not null)
@@ -79,11 +80,6 @@ namespace AutoPulse.Application.Application.Auctions.Queries.GetAuctionById
                     Locks.TryRemove(request.Id, out _);
                 }
             }
-        }
-
-        private string GetCacheKey(Guid auctionId)
-        {
-            return $"auctions:detail:{auctionId.ToString()}";
         }
     }
 }

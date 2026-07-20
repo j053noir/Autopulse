@@ -1,4 +1,4 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Application.Application.Common.Security;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities;
@@ -46,13 +46,11 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
             // 4. Save changes to the database
             await _context.SaveChangesAsync(cancellationToken);
 
-            var cacheKey = GetCacheKey();
+            var cacheKey = Common.Constants.CacheKeys.ActiveAuctionsList;
             await _cacheService.RemoveAsync(cacheKey, cancellationToken); // Invalidate the cache for the list of active auctions
 
             // 5. Return the new resource Id
             return auctionId;
         }
-
-        private string GetCacheKey() => $"auctions:list_active";
     }
 }

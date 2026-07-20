@@ -1,4 +1,4 @@
-﻿using AutoPulse.Application.Application.Common.Interfaces;
+using AutoPulse.Application.Application.Common.Interfaces;
 using AutoPulse.Application.Application.Vehicles.Queries.GetVehicleSpecs.Dto;
 using AutoPulse.Domain.Common.Interfaces;
 using AutoPulse.Domain.Entities.NoSql;
@@ -25,7 +25,7 @@ namespace AutoPulse.Application.Application.Vehicles.Queries.GetVehicleSpecs
 
         public async Task<VehicleSpecsDto?> Handle(GetVehicleSpecsQuery request, CancellationToken cancellationToken)
         {
-            var cacheKey = GetCacheKey(request);
+            var cacheKey = Common.Constants.CacheKeys.VehicleSpecs(Guid.Parse(request.AuctionId));
 
             // 1. Try to get from cache first
             var cachedSpecs = await _cacheService.GetAsync<VehicleSpecsDto>(cacheKey, cancellationToken);
@@ -70,11 +70,6 @@ namespace AutoPulse.Application.Application.Vehicles.Queries.GetVehicleSpecs
                 }
             }
             
-        }
-
-        private string GetCacheKey(GetVehicleSpecsQuery request)
-        {
-            return $"vehicles:specs:{request.AuctionId}";
         }
     }
 }
