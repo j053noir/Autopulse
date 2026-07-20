@@ -1,4 +1,3 @@
-using System;
 using AutoPulse.Application.Application.Authentication.Common.Dto;
 using AutoPulse.Application.Application.Common.Interfaces;
 

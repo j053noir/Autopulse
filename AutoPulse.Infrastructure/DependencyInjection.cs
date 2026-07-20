@@ -68,6 +68,7 @@ namespace AutoPulse.Infrastructure
 
             services.AddScoped<ICacheService, ValkeyCacheService>();
             services.AddScoped<IPermissionCacheService, PermissionCacheService>();
+            services.AddScoped<IUserProfileService, UserProfileService>();
 
             // TODO: Replace MockEmailService and MockPaymentService with real implementations when available
             services.AddScoped<IEmailService, MockEmailService>();

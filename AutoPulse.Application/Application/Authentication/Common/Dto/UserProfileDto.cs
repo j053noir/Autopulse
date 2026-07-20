@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace AutoPulse.Application.Application.Authentication.Common.Dto
 {
     public record UserProfileDto(
@@ -8,6 +5,6 @@ namespace AutoPulse.Application.Application.Authentication.Common.Dto
         string UserName,
         string Email,
         bool IsActive,
-        HashSet<string> Permissions
+        HashSet<string>? Permissions
     );
 }
