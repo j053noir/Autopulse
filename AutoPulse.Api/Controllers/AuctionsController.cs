@@ -125,7 +125,7 @@ namespace AutoPulse.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> Create([FromBody] CreateAuctionCommand command, CancellationToken cancellationToken)
         {
-            var auctioneerId = GetUserClaimId(nameof(CreateAuctionBidCommand.AuctioneerId));
+            var auctioneerId = GetUserClaimId(nameof(CreateAuctionCommand.AuctioneerId));
             var updatedCommand = command with { AuctioneerId = auctioneerId };
 
             var result = await _mediator.Send(updatedCommand, cancellationToken);
@@ -154,11 +154,11 @@ namespace AutoPulse.Api.Controllers
             [FromRoute] Guid id,
             [FromBody] CreateAuctionBidCommand command, CancellationToken cancellationToken)
         {
-            var bidderId = GetUserClaimId(nameof(CreateAuctionBidCommand.AuctioneerId));
+            var bidderId = GetUserClaimId(nameof(CreateAuctionBidCommand.BidderId));
 
             // Update auction id to use the one from the route parameter instead of the one from the request body
             // Update auctioneer Id to use the one from the token claim
-            var updatedCommand = command with { AuctionId = id, AuctioneerId = bidderId};
+            var updatedCommand = command with { AuctionId = id, BidderId = bidderId};
 
             var result = await _mediator.Send(updatedCommand, cancellationToken);
 

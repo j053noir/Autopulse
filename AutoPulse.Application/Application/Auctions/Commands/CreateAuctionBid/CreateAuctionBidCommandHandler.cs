@@ -15,6 +15,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
         private readonly IAutoPulseDbContext _context;
         private readonly ICacheService _cacheService;
         private readonly IRepository<User> _userRepository;
+        private readonly IUserProfileService _userProfileService;
         private readonly IAuctionEventDispatcher _dispatcher;
 
         public CreateAuctionBidCommandHandler
@@ -22,13 +23,17 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
             IRepository<Auction> auctionRepository,
             IAutoPulseDbContext context,
             ICacheService cacheService,
-            IRepository<User> userRepository
+            IRepository<User> userRepository,
+            IUserProfileService userProfileService,
+            IAuctionEventDispatcher dispatcher
         )
         {
             _auctionRepository = auctionRepository;
             _context = context;
             _cacheService = cacheService;
             _userRepository = userRepository;
+            _userProfileService = userProfileService;
+            _dispatcher = dispatcher;
         }
 
         public async Task<Guid> Handle(CreateAuctionBidCommand request, CancellationToken cancellationToken)
@@ -39,9 +44,6 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
 
             // 2. Create the inmutable value object for the amount
             var bidAmount = Money.Create(request.Amount, request.Currency);
-
-            // 3. Retrieve bidder data
-            var bidder = await _cacheService.GetAsync<User>(CacheKeys.UserProfile(request.BidderId), cancellationToken);
 
             // 3. Create bid through parent auction
             var bid = auction.PlaceBid(request.BidderId, bidAmount);
@@ -61,10 +63,13 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
                 throw new Exception("The auction was updated by another user while you were placing your bid. Please try again.");
             }
 
-            // 8. Dispatch real time event
-            await _dispatcher.PublishBidPlaceAsync(request.AuctionId.ToString(), request.Amount, request.BidderId.ToString());
+            // 8. Retrieve bidder data using UserProfileService
+            var bidder = await _userProfileService.GetProfileAsync(request.BidderId, string.Empty, cancellationToken);
 
-            // 9. Return the new resource Id
+            // 9. Dispatch real time event
+            await _dispatcher.PublishBidPlaceAsync(request.AuctionId.ToString(), request.Amount, bidder?.UserName ?? request.BidderId.ToString());
+
+            // 10. Return the new resource Id
             return bid.Id;
         }
     }

@@ -1,4 +1,7 @@
+using AutoPulse.Api.Hubs;
 using AutoPulse.Api.Middleware;
+using AutoPulse.Api.Services;
+using AutoPulse.Domain.Interfaces;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Common.Behaviors;
 using AutoPulse.Infrastructure;
@@ -63,6 +66,10 @@ builder.Services.AddDistributedRateLimiter(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
+// Real-Time events dispatcher registration
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IAuctionEventDispatcher, SignalRAuctionEventDispatcher>();
+
 builder.Services.AddMediatR(cfg =>
 {
     cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
@@ -77,7 +84,7 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddOpenApi(options =>
 {
-    options.OpenApiVersion = Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0;
+    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
@@ -105,6 +112,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHubs();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

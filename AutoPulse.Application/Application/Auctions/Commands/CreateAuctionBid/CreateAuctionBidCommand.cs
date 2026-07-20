@@ -7,7 +7,7 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
     public record CreateAuctionBidCommand
     (
         Guid AuctionId,
-        Guid AuctioneerId,
+        Guid BidderId,
         [Range(0.01, 1000000000000.0, ErrorMessage = "Amount must be greater than 0.")]
         decimal Amount,
         [RegularExpression(@"^(USD|CAD|COP)$", ErrorMessage = "Currency must be USD, CAD, or COP.")]
