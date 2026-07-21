@@ -5,6 +5,7 @@ using AutoPulse.Application.Application.Auctions.Queries.Common.Dto;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionById;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard.Dto;
+using AutoPulse.Application.Application.Auctions.Queries.GetUserBids;
 using AutoPulse.Domain.Common.Security;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -39,6 +40,27 @@ namespace AutoPulse.Api.Controllers
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<IActionResult> GetActiveAuctions([FromQuery] GetAuctionWithVehicleQuery query, CancellationToken cancellationToken)
         {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+        
+        /// <summary>
+        /// Retrieves the bids placed by the currently authenticated user.
+        /// </summary>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A list of bids placed by the user.</returns>
+        /// <response code="200">Returns the list of user bids.</response>
+        /// <response code="401">If the request is unauthorized.</response>
+        /// <response code="403">If the user does not have permission to read bids.</response>
+        [HttpGet("bids/my")]
+        [Authorize(Policy = Permissions.Auctions.ReadBids)]
+        [ProducesResponseType(typeof(IReadOnlyList<UserBidDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetMyBids(CancellationToken cancellationToken)
+        {
+            var userId = GetUserClaimId("UserId");
+            var query = new GetUserBidsQuery(userId);
             var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }

@@ -33,5 +33,6 @@ namespace AutoPulse.Application.Application.Common.Constants
 
         // Users
         public static string UserProfile(Guid userId) => $"users:profile:{userId}";
+        public static string UserBids(Guid userId) => $"auctions:user-bids:{userId}";
     }
 }

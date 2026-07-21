@@ -9,6 +9,8 @@ namespace AutoPulse.Domain.Common.Security
             public const string Delete = "auctions:delete";
             public const string Read = "auctions:read";
             public const string Close = "auctions:close";
+            public const string ReadBids = "auctions:read-bids";
+            public const string ReadAllBids = "auctions:read-all-bids";
         }
 
         public static class  Users
