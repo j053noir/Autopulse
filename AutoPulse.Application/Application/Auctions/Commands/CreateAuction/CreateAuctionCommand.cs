@@ -6,12 +6,20 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
 {
     public record CreateAuctionCommand
     (
-        // Vehicle,
+        // Vehicle Basic Info,
         string Vin,
         string Marquee,
         string Model,
         int Year,
         int Mileage,
+        
+        // Vehicle Additional Info (Document & Auction Properties),
+        string Title,
+        decimal BasePrice,
+        decimal MinimumBidIncrement,
+        string Category,
+        string DocumentStorageKey,
+        
         // Auction,
         Guid AuctioneerId,
         [Range(0.01, 1000000000000.0, ErrorMessage = "Starting price must be greater than 0.")]
@@ -22,3 +30,4 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
         Guid IdempotencyKey
     ) : IRequest<Guid>, IIdempotentCommand;
 }
+

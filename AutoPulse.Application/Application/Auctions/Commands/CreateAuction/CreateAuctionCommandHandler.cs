@@ -12,16 +12,19 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
         private readonly IRepository<Auction> _auctionRepository;
         private readonly IAutoPulseDbContext _context;
         private readonly ICacheService _cacheService;
+        private readonly IMediator _mediator;
 
         public CreateAuctionCommandHandler(
             IRepository<Auction> auctionRepository,
             IAutoPulseDbContext context,
-            ICacheService cacheService
+            ICacheService cacheService,
+            IMediator mediator
         )
         {
             _auctionRepository = auctionRepository;
             _context = context;
             _cacheService = cacheService;
+            _mediator = mediator;
         }
 
         public async Task<Guid> Handle(CreateAuctionCommand request, CancellationToken cancellationToken)
@@ -33,8 +36,26 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
             var sanitizedVin = request.Vin.SanitizeInput();
             var sanitizedMarquee = request.Marquee.SanitizeInput();
             var sanitizeModel = request.Model.SanitizeInput();
+            var sanitizedTitle = request.Title.SanitizeInput();
+            var sanitizedCategory = request.Category.SanitizeInput();
+            var sanitizedStorageKey = request.DocumentStorageKey.SanitizeInput();
 
-            var vehicle = Vehicle.Create(vehicleId, sanitizedVin, sanitizedMarquee, sanitizeModel, request.Year, request.Mileage);
+            var basePriceMoney = Money.Create(request.BasePrice, request.Currency);
+            var minBidMoney = Money.Create(request.MinimumBidIncrement, request.Currency);
+
+            var vehicle = Vehicle.Create(
+                vehicleId, 
+                sanitizedVin, 
+                sanitizedMarquee, 
+                sanitizeModel, 
+                request.Year, 
+                request.Mileage,
+                sanitizedTitle,
+                basePriceMoney,
+                minBidMoney,
+                sanitizedCategory,
+                sanitizedStorageKey
+            );
 
             // 2. Create auction entity using its factory methods
             var auctionId = Guid.NewGuid();
@@ -46,11 +67,28 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuction
             // 4. Save changes to the database
             await _context.SaveChangesAsync(cancellationToken);
 
+            // 5 Dispatch Domain Events mapped to Application events
+            foreach (var domainEvent in auction.DomainEvents)
+            {
+                if (domainEvent is Domain.Events.AuctionCreatedDomainEvent ac)
+                {
+                    await _mediator.Publish(new Common.Events.AuctionCreatedEvent(
+                        ac.AuctionId,
+                        ac.Title,
+                        ac.BasePrice,
+                        ac.EndTime,
+                        ac.AuctioneerId
+                    ), cancellationToken);
+                }
+            }
+            auction.ClearDomainEvents();
+
             var cacheKey = Common.Constants.CacheKeys.ActiveAuctionsList;
             await _cacheService.RemoveAsync(cacheKey, cancellationToken); // Invalidate the cache for the list of active auctions
 
-            // 5. Return the new resource Id
+            // 6. Return the new resource Id
             return auctionId;
         }
     }
 }
+
