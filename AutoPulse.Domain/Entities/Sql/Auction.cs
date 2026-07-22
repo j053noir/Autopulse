@@ -45,7 +45,17 @@ namespace AutoPulse.Domain.Entities
             if (endTime <= DateTime.UtcNow)
                 throw new ArgumentException("End time must be in the future.", nameof(endTime));
 
-            return new Auction(id, auctioneerId, vehicle, startingPrice, endTime);
+            var auction = new Auction(id, auctioneerId, vehicle, startingPrice, endTime);
+            
+            auction.AddDomainEvent(new Events.AuctionCreatedDomainEvent(
+                auction.Id,
+                vehicle.Title ?? string.Empty,
+                startingPrice.Amount,
+                endTime,
+                auctioneerId
+            ));
+
+            return auction;
         }
 
         public Bid PlaceBid(Guid bidderId, Money bidAmount)
