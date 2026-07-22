@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy csproj files and restore dependencies
+COPY ["AutoPulse.Notifications/AutoPulse.Notifications.Workers/AutoPulse.Notifications.Workers.csproj", "AutoPulse.Notifications/AutoPulse.Notifications.Workers/"]
+COPY ["AutoPulse.Notifications/AutoPulse.Notifications.Shared/AutoPulse.Notifications.Shared.csproj", "AutoPulse.Notifications/AutoPulse.Notifications.Shared/"]
+
+RUN dotnet restore "AutoPulse.Notifications/AutoPulse.Notifications.Workers/AutoPulse.Notifications.Workers.csproj"
+
+# Copy the rest of the source code
+COPY . .
+
+# Build and publish the Worker (disabling AOT inside Docker if prerequisites like clang are missing)
+WORKDIR "/src/AutoPulse.Notifications/AutoPulse.Notifications.Workers"
+RUN dotnet publish "AutoPulse.Notifications.Workers.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:PublishAot=false
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+ENTRYPOINT ["dotnet", "AutoPulse.Notifications.Workers.dll"]
