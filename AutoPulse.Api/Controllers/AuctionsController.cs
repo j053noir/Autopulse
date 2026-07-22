@@ -2,6 +2,7 @@ using AutoPulse.Application.Application.Auctions.Commands.CreateAuction;
 using AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid;
 using AutoPulse.Application.Application.Auctions.Queries.ActiveAuctionsWithVehicle;
 using AutoPulse.Application.Application.Auctions.Queries.Common.Dto;
+using AutoPulse.Application.Application.Auctions.Queries.GenerateDocumentUploadUrl;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionById;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard;
 using AutoPulse.Application.Application.Auctions.Queries.GetAuctionDashboard.Dto;
@@ -22,6 +23,25 @@ namespace AutoPulse.Api.Controllers
         public AuctionsController(IMediator mediator)
         {
             _mediator = mediator;
+        }
+
+        /// <summary>
+        /// Generates a pre-signed URL to upload vehicle documentation.
+        /// </summary>
+        /// <param name="query">The query specifying file name and content type.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A pre-signed URL and unique storage key.</returns>
+        /// <response code="200">Returns the pre-signed URL details.</response>
+        /// <response code="400">If request data is invalid.</response>
+        /// <response code="415">If media type is unsupported.</response>
+        [HttpPost("upload-url")]
+        [Authorize(Policy = Permissions.Auctions.Create)]
+        [ProducesResponseType(typeof(PreSignedUrlResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetUploadUrl([FromBody] GenerateDocumentUploadUrlQuery query, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
         }
 
         /// <summary>

@@ -23,5 +23,12 @@ namespace AutoPulse.Api.Services
         {
             await _hubContext.Clients.Group(auctionId).OnBidPlaced(auctionId, newPrice, bidderName);
         }
+
+        public async Task PublishAuctionCreatedAsync(string auctionId, string title, decimal basePrice)
+        {
+            // Broadcast to all connected clients that a new auction has been created
+            await _hubContext.Clients.All.OnAuctionCreated(auctionId, title, basePrice);
+        }
     }
 }
+
