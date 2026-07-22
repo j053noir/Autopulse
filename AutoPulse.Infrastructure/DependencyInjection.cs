@@ -13,6 +13,8 @@ using AutoPulse.Infrastructure.Persistence.Sql.Queries;
 using AutoPulse.Infrastructure.Persistence.Sql.Repositories;
 using AutoPulse.Infrastructure.Security;
 using AutoPulse.Infrastructure.Services.Telemetry;
+using AutoPulse.Infrastructure.Services;
+using AutoPulse.Domain.Interfaces.Storage;
 using EntityFramework.Exceptions.PostgreSQL;
 using MassTransit;
 using Microsoft.AspNetCore.Authorization;
@@ -69,6 +71,15 @@ namespace AutoPulse.Infrastructure
             services.AddScoped<ICacheService, ValkeyCacheService>();
             services.AddScoped<IPermissionCacheService, PermissionCacheService>();
             services.AddScoped<IUserProfileService, UserProfileService>();
+
+            // Register Blob Storage Service
+            services.AddScoped<IBlobStorageService, AzureBlobStorageService>();
+
+            // Register HTTP Client for Notifications Ingestion API
+            services.AddHttpClient<INotificationClient, NotificationHttpClient>(client =>
+            {
+                client.BaseAddress = new Uri(configuration["Notifications:ServiceUrl"] ?? "http://localhost:5200");
+            });
 
             // TODO: Replace MockEmailService and MockPaymentService with real implementations when available
             services.AddScoped<IEmailService, MockEmailService>();
