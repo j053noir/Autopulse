@@ -54,8 +54,12 @@ namespace AutoPulse.Application.Application.Auctions.Commands.CreateAuctionBid
                 await _context.SaveChangesAsync(cancellationToken);
 
                 var cacheKey = CacheKeys.AuctionDetail(request.AuctionId);
-                // 6. Invalidate the cache for the auction details
-                await _cacheService.RemoveAsync(cacheKey, cancellationToken);
+                // 6.1. Invalidate the cache for the user's bids
+                var userBidsCacheKey = CacheKeys.UserBids(request.BidderId);
+                await _cacheService.RemoveAsync(userBidsCacheKey, cancellationToken);
+
+                // 6.2. Invalidate the active auctions list cache
+                await _cacheService.RemoveAsync(CacheKeys.ActiveAuctionsList, cancellationToken);
             }
             catch (DbUpdateConcurrencyException)
             {
