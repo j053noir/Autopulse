@@ -23,13 +23,14 @@ INSERT INTO "Users" (
 
 -- 2. Seed Vehicles (17-char VINs)
 INSERT INTO "Vehicles" (
-    "Id", "VIN", "Marquee", "Model", "Year", "Mileage", "CreatedAt", "UpdatedAt", "DeletedAt"
+    "Id", "VIN", "Marquee", "Model", "Year", "Mileage", "CreatedAt", "UpdatedAt", "DeletedAt",
+    "Title", "BasePriceAmount", "BasePriceCurrencyCode", "MinimumBidIncrementAmount", "MinimumBidIncrementCurrencyCode", "Category", "DocumentStorageKey"
 ) VALUES
-('019056d0-2a81-7000-8b1e-50e50f3c5bd0', '1HGCR2F83JA000001', 'Honda', 'Accord', 2018, 45000, NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bd1', '4T1BF1FK5LU000002', 'Toyota', 'Camry', 2020, 28000, NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bd2', '1FA6P8CF0H5000003', 'Ford', 'Mustang GT', 2017, 52000, NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bd3', 'SALWR2V4XHA000004', 'Land Rover', 'Defender', 2022, 12000, NOW(), NULL, NULL),
-('019056d0-2a81-7000-8b1e-50e50f3c5bd4', 'WBA3A5C56KF000005', 'BMW', 'M3', 2019, 34000, NOW(), NULL, NULL);
+('019056d0-2a81-7000-8b1e-50e50f3c5bd0', '1HGCR2F83JA000001', 'Honda', 'Accord', 2018, 45000, NOW(), NULL, NULL, '2018 Honda Accord', 15000.00, 'USD', 250.00, 'USD', 'sedan', 'documents/honda-accord-2018.pdf'),
+('019056d0-2a81-7000-8b1e-50e50f3c5bd1', '4T1BF1FK5LU000002', 'Toyota', 'Camry', 2020, 28000, NOW(), NULL, NULL, '2020 Toyota Camry', 18000.00, 'USD', 300.00, 'USD', 'sedan', 'documents/toyota-camry-2020.pdf'),
+('019056d0-2a81-7000-8b1e-50e50f3c5bd2', '1FA6P8CF0H5000003', 'Ford', 'Mustang GT', 2017, 52000, NOW(), NULL, NULL, '2017 Ford Mustang GT', 22000.00, 'USD', 250.00, 'USD', 'sport', 'documents/ford-mustang-2017.pdf'),
+('019056d0-2a81-7000-8b1e-50e50f3c5bd3', 'SALWR2V4XHA000004', 'Land Rover', 'Defender', 2022, 12000, NOW(), NULL, NULL, '2022 Land Rover Defender', 55000.00, 'USD', 500.00, 'USD', 'suv', 'documents/land-rover-defender-2022.pdf'),
+('019056d0-2a81-7000-8b1e-50e50f3c5bd4', 'WBA3A5C56KF000005', 'BMW', 'M3', 2019, 34000, NOW(), NULL, NULL, '2019 BMW M3', 48000.00, 'USD', 400.00, 'USD', 'sport', 'documents/bmw-m3-2019.pdf');
 
 -- 3. Seed Auctions (Link to Vehicles and Users)
 INSERT INTO "Auctions" (

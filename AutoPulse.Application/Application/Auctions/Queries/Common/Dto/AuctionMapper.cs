@@ -41,7 +41,12 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
                     auction.Vehicle.Marquee,
                     auction.Vehicle.Model,
                     auction.Vehicle.Year,
-                    auction.Vehicle.Mileage
+                    auction.Vehicle.Mileage,
+                    auction.Vehicle.Title,
+                    auction.Vehicle.BasePrice?.Amount,
+                    auction.Vehicle.MinimumBidIncrement?.Amount,
+                    auction.Vehicle.Category,
+                    auction.Vehicle.DocumentStorageKey
                 )
                 : null;
             var bidDtos = auction.Bids?.Select(bid => new BidDto(

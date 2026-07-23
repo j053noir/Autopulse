@@ -55,7 +55,12 @@ namespace AutoPulse.Application.Application.Auctions.Queries.Common.Dto
         string? Marquee,
         string? Model,
         int? Year,
-        int? Mileage
+        int? Mileage,
+        string? Title,
+        decimal? BasePrice,
+        decimal? MinimumBidIncrement,
+        string? Category,
+        string? DocumentStorageKey
     );
 
     /// <summary>
