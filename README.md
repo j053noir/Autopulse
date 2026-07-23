@@ -70,8 +70,38 @@ docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localho
 docker exec -it autopulse-kafka kafka-topics --create --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1 --topic notification.marketing.bulk
 ```
 
-### Listar Tópicos Existentes
+# Listar Tópicos Existentes
 Para verificar que los tópicos se hayan creado correctamente:
 ```bash
 docker exec -it autopulse-kafka kafka-topics --list --bootstrap-server localhost:9092
 ```
+
+---
+
+## Estrategia de Caché e Invalación (Valkey)
+
+Para soportar altos niveles de concurrencia y acelerar la lectura, AutoPulse implementa una capa de almacenamiento en caché distribuido usando **Valkey** (compatible con Redis) a través de `ICacheService`:
+
+* **Subastas Activas**: Listado filtrado y paginado (`auctions:list_active`). Expiración por defecto de 5 minutos.
+* **Detalle de Subasta**: Ficha técnica de subasta individual (`auctions:detail:{id}`).
+* **Ofertas de Usuario**: Registro histórico y estado de pujas del usuario (`auctions:user-bids:{userId}`).
+
+### Política de Invalidación de Caché
+Para evitar inconsistencias visuales en el front-end, al momento de consolidar una puja a través de `CreateAuctionBidCommandHandler`:
+1. Se remueve la caché del detalle de la subasta (`auctions:detail:{id}`).
+2. Se remueve la caché histórica de pujas del usuario postor (`auctions:user-bids:{userId}`).
+3. Se remueve la caché del listado general de subastas activas (`auctions:list_active`), forzando a los clientes a obtener los nuevos precios en tiempo real.
+
+---
+
+## Extensiones de Dominio del Vehículo (Base de Datos)
+
+El esquema relacional de la tabla `Vehicles` en PostgreSQL se extendió para almacenar información adicional de negocio:
+* `Title` (Título descriptivo comercial del vehículo).
+* `BasePrice` (Precio de reserva base para la subasta).
+* `MinimumBidIncrement` (Incremento mínimo requerido para cada puja sucesiva).
+* `Category` (Categoría de mercado: sedan, suv, coupe, etc.).
+* `DocumentStorageKey` (Identificador del documento legal/título almacenado en el file storage).
+
+Estos campos son poblados automáticamente al levantar el contenedor de base de datos con el perfil `--profile seed`.
+
