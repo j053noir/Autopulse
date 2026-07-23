@@ -114,6 +114,8 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHubs();
 
+app.MapGet("/", () => Results.Content("<h1>Welcome to the AutoPulse API!</h1><p><a href=\"/swagger\">Go to Swagger UI</a></p>", "text/html"));
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
