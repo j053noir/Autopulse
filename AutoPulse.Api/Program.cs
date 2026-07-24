@@ -14,8 +14,47 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Text;
+using Serilog;
+using Serilog.Formatting.Json;
+using Serilog.Enrichers.Span;
+using OpenTelemetry;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .Enrich.WithSpan()
+    .Enrich.WithProperty("Environment", context.HostingEnvironment.EnvironmentName)
+    .Enrich.WithProperty("ApplicationName", "AutoPulse.Api")
+    .WriteTo.Console(new JsonFormatter()));
+
+// Configure OpenTelemetry Tracing
+Sdk.SetDefaultTextMapPropagator(new OpenTelemetry.Context.Propagation.TraceContextPropagator());
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("AutoPulse.Backend"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddSource("AutoPulse.*")
+            .AddSource("MassTransit")
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                var endpoint = builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? "http://localhost:4317";
+                options.Endpoint = new Uri(endpoint);
+            });
+    });
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -72,6 +111,7 @@ builder.Services.AddSingleton<IAuctionEventDispatcher, SignalRAuctionEventDispat
 
 builder.Services.AddMediatR(cfg =>
 {
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
     cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
 
     // Database behavior
@@ -109,6 +149,25 @@ app.UseCors("CorsPolicy");
 
 app.UseRateLimiter();
 app.UseAuthentication();
+
+// Middleware to enrich Serilog LogContext with UserId from JWT
+app.Use(async (context, next) =>
+{
+    var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value 
+                 ?? context.User.FindFirst("sub")?.Value;
+    if (!string.IsNullOrEmpty(userId))
+    {
+        using (Serilog.Context.LogContext.PushProperty("UserId", userId))
+        {
+            await next();
+        }
+    }
+    else
+    {
+        await next();
+    }
+});
+
 app.UseAuthorization();
 
 app.MapControllers();
