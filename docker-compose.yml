@@ -32,6 +32,22 @@ services:
       mongodb:
         condition: service_healthy
 
+  web:
+    build:
+      context: ../autopulse-web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:5000
+    container_name: autopulse-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+    depends_on:
+      api:
+        condition: service_started
+
   notifications-ingestion:
     build:
       context: .
