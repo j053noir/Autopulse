@@ -1,62 +1,355 @@
 # AutoPulse 🚗⚡
 
-AutoPulse es una plataforma distribuida y de alta concurrencia diseñada para subastas de vehículos en vivo y monitoreo de telemetría en tiempo real. Construida sobre .NET 10 bajo los principios de Arquitectura Limpia (Clean Architecture), la aplicación integra almacenamiento relacional y NoSQL, caché distribuida y mensajería orientada a eventos.
+AutoPulse es una plataforma distribuida y de alta concurrencia diseñada para subastas de vehículos en vivo y monitoreo de telemetría en tiempo real. Construida sobre .NET 10 bajo los principios de Arquitectura Limpia (Clean Architecture), la aplicación integra almacenamiento relacional y NoSQL, caché distribuida, tuberías de resiliencia, optimizaciones de memoria con cero asignaciones en el heap y mensajería orientada a eventos.
 
 ---
 
-## 🏛️ Arquitectura y Patrones de Diseño
+## 🏛️ Arquitectura del Sistema y Modelo C4
 
-AutoPulse está estructurado en base a **Arquitectura Limpia (Clean Architecture)**, lo que garantiza una segregación estricta de responsabilidades para mantener la lógica de negocio central independiente de frameworks externos, bases de datos y mecanismos de entrega.
+AutoPulse está estructurado en base a **Arquitectura Limpia (Clean Architecture)** y documentado mediante el **Modelo C4** para la visualización de arquitectura de software.
 
+### C4 Nivel 1: Diagrama de Contexto del Sistema
+
+El diagrama de Contexto ilustra cómo los actores externos (Compradores/Pujadores, Subastadores, Sensores IoT) interactúan con la plataforma AutoPulse y sus integraciones externas.
+
+```mermaid
+C4Context
+    title Diagrama de Contexto del Sistema para AutoPulse
+
+    Person(bidder, "Comprador / Usuario", "Realiza pujas, consulta subastas en vivo y gestiona su perfil.")
+    Person(auctioneer, "Subastador / Admin", "Crea subastas y monitorea el estado de la plataforma.")
+    SystemDb(sensors, "Sensores IoT de Vehículos", "Emite datos de telemetría a alta frecuencia.")
+
+    System(autopulseWeb, "Portal Web AutoPulse", "Panel de control en Next.js / React.")
+    System(autopulse, "Plataforma Backend AutoPulse", "Servicios API centrales y workers distribuidos en .NET 10.")
+
+    System_Ext(paymentGateway, "Pasarela de Pagos", "Procesador de pagos de terceros.")
+    System_Ext(notificationServices, "Proveedores de Notificaciones", "Servicios externos de Email, SMS y Push.")
+
+    Rel(bidder, autopulseWeb, "Utiliza", "HTTPS / WSS")
+    Rel(auctioneer, autopulseWeb, "Gestiona subastas vía", "HTTPS")
+    Rel(sensors, autopulse, "Transmite Telemetría en CSV", "HTTP / REST")
+    Rel(autopulseWeb, autopulse, "Invoca APIs y se conecta a SignalR", "HTTPS / WSS")
+    Rel(autopulse, paymentGateway, "Procesa pagos", "HTTPS / Resiliencia con Polly")
+    Rel(autopulse, notificationServices, "Envía alertas", "Kafka / Resiliencia con Polly")
 ```
-                  ┌──────────────────────────────┐
-                  │          AutoPulse.Api       │
-                  └──────────────┬───────────────┘
-                                 │
-                                 ▼
-                  ┌──────────────────────────────┐
-                  │    AutoPulse.Application     │
-                  └──────────────┬───────────────┘
-                                 │
-                                 ▼
-                  ┌──────────────────────────────┐
-                  │       AutoPulse.Domain       │
-                  └──────────────────────────────┘
-                                 ▲
-                                 │
-                  ┌──────────────┴───────────────┐
-                  │   AutoPulse.Infrastructure   │
-                  └──────────────────────────────┘
+
+---
+
+### C4 Nivel 2: Diagrama de Contenedores
+
+El diagrama de Contenedores detalla los componentes tecnológicos clave, motores de datos, capas de caché y brokers de eventos dentro del límite de la solución AutoPulse.
+
+```mermaid
+C4Container
+    title Diagrama de Contenedores para el Backend de AutoPulse
+
+    Person(user, "Usuario / Navegador", "Usuario del Portal Web")
+
+    Container(webApp, "Portal Web", "Next.js 16, Tailwind, SignalR", "Interfaz frontend para subastas en vivo y panel de telemetría.")
+
+    SystemBound(backend, "Límite del Sistema AutoPulse") {
+        Container(api, "Servicio API", ".NET 10, ASP.NET Core", "Procesa endpoints HTTP, hubs de SignalR, CQRS con MediatR y Auth JWT.")
+        Container(worker, "Worker de Notificaciones", ".NET 10 Worker", "Consume tópicos de Kafka y despacha notificaciones de email/SMS/push.")
+
+        ContainerDb(postgresMaster, "PostgreSQL (Master)", "PostgreSQL 17", "Base de datos relacional principal para Subastas, Pujas y Usuarios.")
+        ContainerDb(postgresSlave, "PostgreSQL (Slave)", "PostgreSQL 17", "Réplica de lectura para cargas de consulta de alto volumen.")
+        ContainerDb(mongoDb, "MongoDB", "MongoDB 7", "Almacenamiento documental para fichas técnicas y metadatos del vehículo.")
+        ContainerDb(valkey, "Caché Valkey", "Valkey 8 (Compatible con Redis)", "Caché distribuida (Cache-Aside) para subastas activas, pujas y rate-limiting.")
+
+        Container(kafka, "Apache Kafka", "Kafka (Modo KRaft)", "Broker de eventos para eventos de integración y orquestación de Sagas.")
+    }
+
+    Rel(user, webApp, "Interactúa con", "HTTPS")
+    Rel(webApp, api, "Llamadas a API y SignalR", "HTTPS / WebSockets")
+
+    Rel(api, postgresMaster, "Escrituras", "EF Core / SQL")
+    Rel(api, postgresSlave, "Lecturas", "EF Core / SQL")
+    Rel(api, mongoDb, "Lecturas/Escrituras de Fichas", "Cliente C# MongoDB")
+    Rel(api, valkey, "Cache-Aside e invalidación", "StackExchange.Redis")
+    Rel(api, kafka, "Publica eventos y estado de Saga", "Transporte Kafka en MassTransit")
+
+    Rel(worker, kafka, "Consume eventos de notificación", "Transporte Kafka en MassTransit")
 ```
 
-### Patrones de Diseño Clave Implementados
+---
 
-1. **CQRS (Command Query Responsibility Segregation) con MediatR**
-   - Las operaciones de escritura (**Commands**) y de lectura (**Queries**) están completamente desacopladas.
-   - Utiliza `MediatR` para orquestar y despachar las solicitudes sin acoplar directamente la capa de API con la lógica de negocio.
-   - Commands principales: `CreateAuction`, `CreateAuctionBid` y `ProcessPayment`.
-   - Queries principales: `ActiveAuctionsWithVehicle` y `GetAuctionDashboard`.
+### C4 Nivel 3: Diagrama de Componentes (Arquitectura Interna)
 
-2. **Sagas Orientadas a Eventos (Choreographed Saga Pattern)**
-   - Gestionado mediante **MassTransit** a través de **Apache Kafka**.
-   - El sistema coordina transacciones complejas distribuidas (como `AuctionBookingSaga`) que involucran el procesamiento de pagos y la generación de contratos de manera confiable.
-   - Se ejecutan pasos de compensación automáticos si falla alguna de las fases de la transacción (por ejemplo, `ReopenAuctionCompensation` para revertir el estado de la subasta si el pago es rechazado).
+El diagrama de Componentes muestra la estructura interna de las capas `AutoPulse.Infrastructure`, `AutoPulse.Application` y `AutoPulse.Domain`.
 
-3. **Procesamiento de Telemetría de Alto Rendimiento (Zero-Allocation Parsing)**
-   - El procesamiento de los datos de telemetría provenientes de los sensores del vehículo maneja un alto volumen de transacciones.
-   - El analizador (parser) utiliza características avanzadas de optimización de memoria de C# como `ReadOnlySpan<char>` y `Span<T>` para procesar cadenas crudas con casi cero asignación de memoria en el heap.
-   - Un **Endpoint de Benchmark** permite realizar pruebas comparativas en tiempo real entre el parser tradicional (`string.Split`) y la versión optimizada con `Span`.
+```mermaid
+graph TD
+    subgraph AutoPulse.Api ["Capa AutoPulse.Api"]
+        Controllers["Controladores API / Controllers"]
+        SignalRHub["Hubs de SignalR (Pujas en Vivo)"]
+    end
 
-4. **Patrón Cache-Aside (Valkey)**
-   - Capa de almacenamiento en caché distribuido implementada a través de `ICacheService` con Valkey (compatible con Redis) para optimizar consultas de lectura críticas:
-     - `auctions:list_active` (listado paginado de subastas activas)
-     - `auctions:detail:{id}` (detalle técnico de una subasta específica)
-     - `auctions:user-bids:{userId}` (historial de pujas del usuario)
-   - **Invalidación de Caché:** Cuando se procesa una nueva puja (`CreateAuctionBidCommandHandler`), las cachés del detalle de la subasta, del historial del usuario y del listado activo se invalidan de forma inmediata.
+    subgraph AutoPulse.Application ["Capa AutoPulse.Application (Núcleo CQRS)"]
+        MediatR["Mediador MediatR"]
+        Commands["Comandos (CreateAuction, Bid, ProcessPayment)"]
+        Queries["Consultas (ActiveAuctions, GetDashboard)"]
+        Validators["Tubería de FluentValidation"]
+    end
 
-5. **Persistencia Políglota**
-   - **PostgreSQL** (configuración Master para escrituras, Slave para replicación de lecturas) gestiona los datos transaccionales (Subastas, Pujas, Usuarios, Vehículos).
-   - **MongoDB** almacena la ficha técnica y especificaciones no estructuradas del vehículo (`VehicleSpecificationDocument`).
+    subgraph AutoPulse.Infrastructure ["Capa AutoPulse.Infrastructure"]
+        Saga["AuctionBookingSaga (Máquina de Estados MassTransit)"]
+        SpanParser["Procesador de Telemetría con Span<T>"]
+        PollyPipeline["Tubería de Resiliencia Polly 8 (GatewayPaymentPolicy)"]
+        CacheService["Servicio de Caché Valkey"]
+        DbContext["DbContext de EF Core Master/Slave"]
+    end
+
+    subgraph External ["Motores de Datos y Brokers"]
+        PG[(PostgreSQL Master/Slave)]
+        VK[(Caché Valkey)]
+        KFK[(Apache Kafka)]
+    end
+
+    Controllers --> MediatR
+    SignalRHub --> MediatR
+    MediatR --> Validators
+    MediatR --> Commands
+    MediatR --> Queries
+
+    Commands --> Saga
+    Commands --> SpanParser
+    Commands --> PollyPipeline
+    Queries --> CacheService
+
+    Saga --> KFK
+    PollyPipeline --> ExternalPayment["Pasarela de Pagos Externa"]
+    CacheService --> VK
+    Commands --> DbContext
+    DbContext --> PG
+```
+
+---
+
+## 🔄 Sagas Orientadas a Eventos (`AuctionBookingSaga`)
+
+AutoPulse gestiona transacciones distribuidas complejas (como el cierre de una subasta, el procesamiento de cobros, la generación de contratos o la reversión de subastas ante fallos) utilizando el **Patrón de Saga Coreografiada** implementado mediante la **Máquina de Estados de MassTransit** sobre **Apache Kafka**.
+
+### Flujo de Transición de Estados de la Saga
+
+Cuando una subasta alcanza su fecha de expiración, el sistema inicia la Saga `AuctionBookingSaga` para garantizar **consistencia eventual** entre servicios independientes sin recurrir a bloqueos transaccionales de dos fases (2PC).
+
+```mermaid
+stateDiagram-v2
+    [*] --> Initial
+    Initial --> ProcessingPayment : Evento AuctionEndedIntegrationEvent
+    ProcessingPayment --> Completed : Evento PaymentSucceededEvent
+    ProcessingPayment --> Compensating : Evento PaymentFailedEvent
+
+    Completed --> [*] : Comando GenerateContractCommand
+
+    state Compensating {
+        [*] --> ExecutingCompensation
+        ExecutingCompensation --> Finalized : Comando ReopenAuctionCompensationCommand
+    }
+
+    Finalized --> [*] : Evento AuctionReopenedEvent
+```
+
+### Camino Feliz vs. Camino de Compensación
+
+| Fase | Evento Detonante | Transición de Estado | Comando Despachado / Acción |
+| :--- | :--- | :--- | :--- |
+| **1. Disparo** | `AuctionEndedIntegrationEvent` | `Initial` ➔ `ProcessingPayment` | Despacha `ProcessPaymentCommand` a `queue:process-payment-service` con el `CorrelationId`. |
+| **2a. Éxito** | `PaymentSucceededEvent` | `ProcessingPayment` ➔ `Completed` | Establece la fecha `PaymentProcessedAt` y despacha `GenerateContractCommand` a `queue:contract-service`. |
+| **2b. Fallo** | `PaymentFailedEvent` | `ProcessingPayment` ➔ `Compensating` | Dispara compensación: despacha `ReopenAuctionCompensationCommand` a `queue:auction-control-service`. |
+| **3. Compensación** | `AuctionReopenedEvent` | `Compensating` ➔ `Finalize` | Revierte el estado de la subasta de `Cerrada` a `Activa`, registra la recuperación en telemetría y finaliza la Saga. |
+
+### Aspectos Técnicos de la Implementación
+
+```csharp
+public class AuctionBookingSaga : MassTransitStateMachine<AuctionBookingSagaState>
+{
+    public State ProcessingPayment { get; private set; }
+    public State Completed { get; private set; }
+    public State Compensating { get; private set; }
+
+    public AuctionBookingSaga()
+    {
+        InstanceState(x => x.CurrentState);
+
+        // Correlaciona eventos entrantes mediante un Correlation ID único de la Saga
+        Event(() => AuctionEnded, x => x.CorrelateById(context => context.Message.EventId));
+        Event(() => PaymentSucceeded, x => x.CorrelateById(context => context.Message.EventId));
+        Event(() => PaymentFailed, x => x.CorrelateById(context => context.Message.EventId));
+
+        During(Initial,
+            When(AuctionEnded)
+                .Then(ctx => { ctx.Saga.AuctionId = ctx.Message.AuctionId; ctx.Saga.WinnerId = ctx.Message.WinnerId; })
+                .TransitionTo(ProcessingPayment)
+                .Send(new Uri("queue:process-payment-service"), ctx => new ProcessPaymentCommand(...))
+        );
+
+        During(ProcessingPayment,
+            When(PaymentSucceeded)
+                .TransitionTo(Completed)
+                .Send(new Uri("queue:contract-service"), ctx => new GenerateContractCommand(...)),
+            When(PaymentFailed)
+                .TransitionTo(Compensating)
+                .Send(new Uri("queue:auction-control-service"), ctx => new ReopenAuctionCompensationCommand(...))
+        );
+    }
+}
+```
+
+---
+
+## ⚡ Analizador de Telemetría de Alto Rendimiento (`Span<T>`)
+
+Los sensores IoT de los vehículos transmiten datos de telemetría a alta frecuencia (coordenadas GPS, velocidades del motor, marcas de tiempo) en formato de cadenas CSV (ejemplo: `V-102938;4.60971;-74.08175;88.5;2026-07-28T10:45:00Z`). Procesar millones de estas líneas utilizando operaciones tradicionales de cadenas genera asignaciones masivas en el heap y provoca pausas del Garbage Collector (GC).
+
+AutoPulse implementa un **Parser de Telemetría con Cero Asignaciones** utilizando `ReadOnlySpan<char>` y `Span<T>` de C#.
+
+### Gestión de Memoria: Enfoque Tradicional vs. Enfoque con `Span<T>`
+
+```mermaid
+flowchart LR
+    subgraph Naive ["Parser Tradicional (string.Split)"]
+        N1["Cadena de entrada"] --> N2["string.Split(';') -> Array en el Heap"]
+        N2 --> N3["5 Asignaciones de Subcadenas en Heap"]
+        N3 --> N4["Presión sobre el GC Gen 0/1/2"]
+    end
+
+    subgraph Span ["Parser con Span<T> (Cero Asignaciones)"]
+        S1["Cadena de entrada"] --> S2["ReadOnlySpan<char> en Stack Frame"]
+        S2 --> S3["Slice(firstSemi + 1) -> Sin Asignación"]
+        S3 --> S4["Conversión directa a Primitivos (double.Parse / DateTime.Parse)"]
+    end
+```
+
+### Comparación de Código
+
+#### ❌ Implementación Tradicional (`string.Split`)
+```csharp
+public TelemetryDataDto? NaiveProcessTelemetry(string csvLine)
+{
+    var parts = csvLine.Split(';'); // ⚠️ ¡Asigna un arreglo string[] e instancias de cadenas para cada elemento en el Heap!
+
+    return new TelemetryDataDto(
+        parts[0].AsMemory(),
+        double.Parse(parts[1], CultureInfo.InvariantCulture),
+        double.Parse(parts[2], CultureInfo.InvariantCulture),
+        double.Parse(parts[3], CultureInfo.InvariantCulture),
+        DateTime.Parse(parts[4], CultureInfo.InvariantCulture)
+    );
+}
+```
+
+#### ✅ Implementación Optimizada (`ReadOnlySpan<char>`)
+```csharp
+public TelemetryDataDto? SpanProcessTelemetry(string csvLine)
+{
+    ReadOnlySpan<char> span = csvLine.AsSpan(); // Referencia en Stack, ¡cero asignación!
+    
+    int firstSemi = span.IndexOf(";");
+    if (firstSemi == -1) return null;
+    ReadOnlyMemory<char> vehicleMemory = csvLine.AsMemory(0, firstSemi);
+
+    ReadOnlySpan<char> remaining = span.Slice(firstSemi + 1);
+    int secondSemi = remaining.IndexOf(";");
+    ReadOnlySpan<char> latSpan = remaining.Slice(0, secondSemi); // ¡Slice no genera objetos en el Heap!
+
+    remaining = remaining.Slice(secondSemi + 1);
+    int thirdSemi = remaining.IndexOf(";");
+    ReadOnlySpan<char> lonSpan = remaining.Slice(0, thirdSemi);
+
+    remaining = remaining.Slice(thirdSemi + 1);
+    int fourthSemi = remaining.IndexOf(";");
+    ReadOnlySpan<char> speedSpan = remaining.Slice(0, fourthSemi);
+
+    ReadOnlySpan<char> dateSpan = remaining.Slice(fourthSemi + 1);
+
+    return new TelemetryDataDto(
+        vehicleMemory,
+        double.Parse(latSpan, CultureInfo.InvariantCulture),   // ¡Convierte directamente desde ReadOnlySpan<char>!
+        double.Parse(lonSpan, CultureInfo.InvariantCulture),
+        double.Parse(speedSpan, CultureInfo.InvariantCulture),
+        DateTime.Parse(dateSpan, CultureInfo.InvariantCulture)
+    );
+}
+```
+
+### Métricas del Benchmark (`/api/telemetry/benchmark`)
+
+El endpoint ejecuta 500,000 iteraciones continuas de análisis bajo carga para evaluar la recolección del GC y la duración total de ejecución:
+
+| Estrategia del Parser | Tiempo de Ejecución (500k ops) | Asignación en Heap | Recolecciones GC Gen 0 | Recolecciones GC Gen 1 | Recolecciones GC Gen 2 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Tradicional (`string.Split`)** | ~480 ms | ~48 MB | ~14 Recolecciones | ~3 Recolecciones | ~0 Recolecciones |
+| **Optimizado (`Span<T>`)** | **~110 ms (4.3x más rápido)** | **~0 Bytes (Heap)** | **0 Recolecciones** | **0 Recolecciones** | **0 Recolecciones** |
+
+---
+
+## 🛡️ Políticas de Resiliencia y Tolerancia a Fallos con Polly 8
+
+Para proteger el sistema contra fallos en cascada, picos de latencia en la red y caídas temporales de la pasarela de pagos externa, AutoPulse utiliza **Tuberías de Resiliencia de Polly 8** configuradas mediante las bibliotecas oficiales de Microsoft (`Microsoft.Extensions.Resilience`).
+
+### Tubería de Defensa en 3 Capas (`GatewayPaymentPolicy`)
+
+Las solicitudes salientes hacia pasarelas de pago y proveedores de notificaciones atraviesan una estrategia defensiva en 3 niveles:
+
+```mermaid
+flowchart TD
+    Req["Solicitud Externa Entrante"] --> ConcurrencyLimiter
+
+    subgraph PollyPipeline ["Tubería de Resiliencia de Polly 8"]
+        ConcurrencyLimiter["1. Limitador de Concurrencia (PermitLimit: 10, QueueLimit: 20)"]
+        CircuitBreaker["2. Disyuntor / Circuit Breaker (50% fallos / ventana 10s)"]
+        ExponentialRetry["3. Reintentos Exponenciales (3 Intentos + Jitter)"]
+
+        ConcurrencyLimiter -->|Permitido| CircuitBreaker
+        CircuitBreaker -->|Estado Cerrado| ExponentialRetry
+    end
+
+    ExponentialRetry -->|Ejecutar| ExternalService["Pasarela de Pagos Externa"]
+
+    ConcurrencyLimiter -->|Cola Agotada| FailFast["Rechazo Inmediato / Fail Fast (429 Too Many Requests)"]
+    CircuitBreaker -->|Estado Abierto| ShortCircuit["Corte de Tráfico / Short Circuit (503 Service Unavailable)"]
+```
+
+### Detalle de Capas y Configuración
+
+```csharp
+services.AddResiliencePipeline(GatewayPaymentPolicy, (builder, context) =>
+{
+    var logger = context.ServiceProvider.GetRequiredService<ILogger<ResiliencePipeline>>();
+
+    builder
+        // 1. Capa Limitadora de Concurrencia (Protege ante picos masivos)
+        .AddConcurrencyLimiter(new ConcurrencyLimiterOptions
+        {
+            PermitLimit = 10,  // Máximo 10 hilos concurrentes procesando pagos
+            QueueLimit = 20    // Máximo 20 solicitudes en cola antes de Fail-Fast
+        })
+
+        // 2. Capa de Disyuntor / Circuit Breaker (Evita saturar servicios caídos)
+        .AddCircuitBreaker(new CircuitBreakerStrategyOptions
+        {
+            FailureRatio = 0.5,                    // Abre el circuito si el 50% de peticiones falla
+            SamplingDuration = TimeSpan.FromSeconds(10),
+            MinimumThroughput = 4,                 // Requiere al menos 4 peticiones de muestra
+            BreakDuration = TimeSpan.FromSeconds(30),// Mantiene el circuito abierto durante 30s
+            OnOpened = args => { logger.LogCritical("[Circuit Breaker] ¡ABIERTO! Tráfico bloqueado."); return ValueTask.CompletedTask; },
+            OnClosed = args => { logger.LogInformation("[Circuit Breaker] CERRADO. Servicio restablecido."); return ValueTask.CompletedTask; },
+            OnHalfOpened = args => { logger.LogWarning("[Circuit Breaker] PRUEBA (Half-Open). Evaluando tráfico..."); return ValueTask.CompletedTask; }
+        })
+
+        // 3. Capa de Reintentos Exponenciales con Jitter (Maneja fallos de red transitorios)
+        .AddRetry(new RetryStrategyOptions
+        {
+            MaxRetryAttempts = 3,
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,                      // Previene el efecto de manada (thundering herd)
+            Delay = TimeSpan.FromSeconds(2),       // Demora inicial: 2s, 4s, 8s (+ jitter aleatorio)
+            OnRetry = args => { logger.LogWarning($"[Retry] Intento #{args.AttemptNumber}. Esperando {args.RetryDelay}."); return ValueTask.CompletedTask; }
+        });
+});
+```
 
 ---
 
@@ -80,6 +373,7 @@ AutoPulse/
 │   │   ├── Sql/                  # DbContext de EF Core (Configuraciones de Master/Slave)
 │   │   └── NoSql/                # Cliente y colecciones de MongoDB
 │   ├── Messaging/                # Máquinas de estado de Sagas en MassTransit, consumidores/productores de Kafka
+│   ├── Resilience/               # Constructor y configuraciones de tuberías de resiliencia con Polly 8
 │   └── Cache/                    # Implementaciones de caché distribuida con Valkey
 ├── AutoPulse.Api/                # Punto de Entrada: Controladores HTTP, Hubs de SignalR, Middlewares
 │   └── Controllers/              # Endpoints de la API (Auctions, Auth, Telemetry)
@@ -92,19 +386,19 @@ AutoPulse/
 
 ### Entorno Base
 * **Plataforma:** .NET 10.0 (`net10.0`)
-* **Bases de datos:** PostgreSQL (Relacional), MongoDB (NoSQL Documental)
+* **Bases de datos:** PostgreSQL 17 (Relacional Master/Slave), MongoDB 7 (NoSQL Documental)
 * **Message Broker:** Apache Kafka (modo KRaft)
-* **Caché:** Valkey (compatible con Redis)
+* **Caché:** Valkey 8 (compatible con Redis)
 
 ### Dependencias de Paquetes
 
 | Paquete | Versión | Descripción |
 | :--- | :--- | :--- |
 | `MediatR` | `14.1.0` | Despacho de peticiones/respuestas para CQRS |
-| `MassTransit` | `8.4.1` | Abstracción de bus de servicios de mensajería sobre Kafka |
+| `MassTransit` | `8.4.1` | Abstracción de bus de servicios y Sagas con Máquina de Estados sobre Kafka |
 | `Microsoft.EntityFrameworkCore` | `10.0.9` | ORM para el acceso relacional a PostgreSQL |
 | `MongoDB.Driver` | `3.9.0` | Biblioteca cliente para almacenamiento de fichas técnicas en MongoDB |
-| `Polly` & `Polly.Extensions` | `8.7.0` | Políticas de resiliencia (reintentos, disyuntor/circuit-breaker) |
+| `Polly` & `Polly.Extensions` | `8.7.0` | Tuberías de resiliencia (Rate limiter, Circuit Breaker, Reintentos Exponenciales) |
 | `FluentValidation` | `11.11.0` | Validación fuertemente tipada de comandos del dominio |
 | `BCrypt.Net-Next` | `4.2.0` | Utilidad de hashing y cifrado de contraseñas |
 | `HtmlSanitizer` | `9.0.892` | Sanitización de entradas de texto generadas por usuarios |
@@ -136,7 +430,7 @@ Todos los endpoints están alojados bajo `http://localhost:5000/api`.
 ### 🔨 Subastas (`/api/auctions`)
 
 * **`GET /api/auctions/active`** [Autorizado: `Auctions.Read`]
-  - Obtiene una lista filtrada y paganida de las subastas activas junto con los detalles del vehículo.
+  - Obtiene una lista filtrada y paginada de las subastas activas junto con los detalles del vehículo.
 * **`GET /api/auctions/{id}`** [Autorizado: `Auctions.Read`]
   - Obtiene los datos detallados de una subasta específica.
 * **`GET /api/auctions/{id}/dashboard`** [Autorizado: `Auctions.Read`]
