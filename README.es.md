@@ -48,7 +48,7 @@ C4Container
 
     Container(webApp, "Portal Web", "Next.js 16, Tailwind, SignalR", "Interfaz frontend para subastas en vivo y panel de telemetría.")
 
-    SystemBound(backend, "Límite del Sistema AutoPulse") {
+    System_Boundary(backend, "Límite del Sistema AutoPulse") {
         Container(api, "Servicio API", ".NET 10, ASP.NET Core", "Procesa endpoints HTTP, hubs de SignalR, CQRS con MediatR y Auth JWT.")
         Container(worker, "Worker de Notificaciones", ".NET 10 Worker", "Consume tópicos de Kafka y despacha notificaciones de email/SMS/push.")
 
