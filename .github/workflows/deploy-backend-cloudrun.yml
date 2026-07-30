@@ -1,0 +1,120 @@
+name: Deploy Backend (.NET 10 API) to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'AutoPulse.Api/**'
+      - 'AutoPulse.Application/**'
+      - 'AutoPulse.Domain/**'
+      - 'AutoPulse.Infrastructure/**'
+      - 'docker/Dockerfile'
+      - '.github/workflows/deploy-backend-cloudrun.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_REGION: us-central1
+  ARTIFACT_REGISTRY_REPO: autopulse-repository
+  SERVICE_NAME: autopulse-api
+  IMAGE_NAME: autopulse-api
+
+jobs:
+  build-and-test:
+    name: 🧪 Build & Test Verification (.NET 10)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK (10.x)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore AutoPulse.slnx
+
+      - name: Build Solution (Release)
+        run: dotnet build AutoPulse.slnx --no-restore -c Release
+
+      - name: Execute Unit & Integration Tests
+        run: dotnet test AutoPulse.slnx --no-build -c Release --verbosity normal
+
+  deploy-cloudrun:
+    name: 🚀 Build, Push & Deploy to Cloud Run
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate with GCP via Workload Identity Federation (WIF) or SA Key
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # Si usas WIF (Recomendado / No-Key Auth):
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SA_EMAIL }}
+          # Fallback usando Service Account Key tradicional (si GCP_WIF_PROVIDER no está presente):
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          create_credentials_file: true
+
+      # 2. Configure Docker authentication against Artifact Registry
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate Docker to Google Artifact Registry
+        run: |-
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      # 3. Build & Push Docker image with GHA Layer Cache
+      - name: Define Image Tags
+        id: image-tags
+        run: |
+          REGISTRY="${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}"
+          FULL_IMAGE="${REGISTRY}/${{ env.IMAGE_NAME }}"
+          echo "IMAGE_SHA=${FULL_IMAGE}:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "IMAGE_LATEST=${FULL_IMAGE}:latest" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.image-tags.outputs.IMAGE_SHA }}
+            ${{ steps.image-tags.outputs.IMAGE_LATEST }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 4. Deploy to Google Cloud Run with Scale-to-Zero and Zero-Downtime Releases
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ steps.image-tags.outputs.IMAGE_SHA }}
+          flags: >-
+            --port=8080
+            --min-instances=0
+            --max-instances=10
+            --cpu=1
+            --memory=512Mi
+            --allow-unauthenticated
+          env_vars: |
+            ASPNETCORE_ENVIRONMENT=Production
+
+      - name: Display Cloud Run Service URL
+        run: |
+          echo "✅ Backend API successfully deployed to Cloud Run!"
+          echo "🌐 URL: ${{ steps.deploy.outputs.url }}"
