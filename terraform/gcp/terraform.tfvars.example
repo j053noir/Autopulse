@@ -1,0 +1,10 @@
+# --------------------------------------------------------------------------------------------------------------------
+# TERRAFORM TFVARS EXAMPLE FILE FOR AUTOPULSE (LOCAL DEV & TESTING)
+# Copia este archivo a 'terraform.tfvars' y completa los valores requeridos sin subirlo a Git.
+# --------------------------------------------------------------------------------------------------------------------
+
+project_id  = "autopulse-gcp-project-id"
+region      = "us-central1"
+environment = "dev"
+db_tier     = "db-f1-micro" # db-custom-1-3840 para producción
+db_password = "ChangeMeSuperSecurePass123!"
