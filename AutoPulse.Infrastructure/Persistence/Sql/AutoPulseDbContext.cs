@@ -13,6 +13,7 @@ namespace AutoPulse.Infrastructure.Persistence.Sql
         private bool _isReadonlyMode;
 
         public DbSet<Auction> Auctions { get; set; }
+        public DbSet<AutoPulse.Domain.Entities.Sql.TelemetryRecord> TelemetryRecords { get; set; }
 
         public AutoPulseDbContext(
             DbContextOptions<AutoPulseDbContext> options,

@@ -14,6 +14,8 @@ using AutoPulse.Infrastructure.Persistence.Sql.Repositories;
 using AutoPulse.Infrastructure.Security;
 using AutoPulse.Infrastructure.Services.Telemetry;
 using AutoPulse.Infrastructure.Services;
+using AutoPulse.Infrastructure.Storage;
+using AutoPulse.Infrastructure.BackgroundJobs;
 using AutoPulse.Domain.Interfaces.Storage;
 using EntityFramework.Exceptions.PostgreSQL;
 using MassTransit;
@@ -90,6 +92,11 @@ namespace AutoPulse.Infrastructure
             services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
             services.AddSingleton<ITelemetryProcessor, TelemetryProcessor>();
+
+            // Telemetry Cold Storage & Archival Services
+            services.AddSingleton<IParquetSerializerService, AutoPulse.Infrastructure.Storage.ParquetSerializerService>();
+            services.AddSingleton<IColdStorageProvider, AutoPulse.Infrastructure.Storage.GcsColdStorageProvider>();
+            services.AddHostedService<AutoPulse.Infrastructure.BackgroundJobs.TelemetryArchivalWorker>();
 
             return services;
         }
