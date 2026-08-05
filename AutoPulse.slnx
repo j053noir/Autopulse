@@ -9,4 +9,6 @@
   <Project Path="AutoPulse.Domain/AutoPulse.Domain.csproj" />
   <Project Path="AutoPulse.Infrastructure/AutoPulse.Infrastructure.csproj" />
   <Project Path="AutoPulse.Tests.Unit/AutoPulse.Tests.Unit.csproj" />
+  <Project Path="AutoPulse.Tests.Integration/AutoPulse.Tests.Integration.csproj" />
 </Solution>
+

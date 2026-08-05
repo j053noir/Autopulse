@@ -224,3 +224,6 @@ public sealed class BearerSecuritySchemeTransformer(IAuthenticationSchemeProvide
         }
     }
 }
+
+public partial class Program { }
+
